@@ -102,6 +102,8 @@ class VerificationResult:
     full_suite_passed: bool
     regression_failures: tuple[str, ...]
     patch_check: PatchCheck
+    target_run: TestRun | None = None
+    full_run: TestRun | None = None
 
     @property
     def passed(self) -> bool:
