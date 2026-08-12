@@ -1,0 +1,28 @@
+name: PyRepair Demo
+
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  repair:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+      - run: python -m pip install -e ".[dev]"
+      - name: Generate and verify candidate patch
+        run: pyrepair fix --repo examples/buggy_bank --model deepseek-v4-flash
+        env:
+          DEEPSEEK_API_KEY: ${{ secrets.DEEPSEEK_API_KEY }}
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: pyrepair-run
+          path: examples/buggy_bank/.pyrepair/runs/
+          if-no-files-found: warn
