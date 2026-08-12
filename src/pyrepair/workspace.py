@@ -33,16 +33,8 @@ class WorkspaceSession:
     working: Path
 
     def snapshot(self) -> PatchSnapshot:
-        baseline_paths = {
-            path.relative_to(self.baseline)
-            for path in self.baseline.rglob("*")
-            if path.is_file()
-        }
-        working_paths = {
-            path.relative_to(self.working)
-            for path in self.working.rglob("*")
-            if path.is_file()
-        }
+        baseline_paths = _snapshot_paths(self.baseline)
+        working_paths = _snapshot_paths(self.working)
         changes: list[FileChange] = []
         for relative in sorted(baseline_paths | working_paths):
             old_path = self.baseline / relative
@@ -117,6 +109,15 @@ def _contains_python_source(repo: Path) -> bool:
         if path.is_file() and not any(part in EXCLUDED_NAMES for part in relative.parts):
             return True
     return False
+
+
+def _snapshot_paths(root: Path) -> set[Path]:
+    paths: set[Path] = set()
+    for path in root.rglob("*"):
+        relative = path.relative_to(root)
+        if path.is_file() and not any(part in EXCLUDED_NAMES for part in relative.parts):
+            paths.add(relative)
+    return paths
 
 
 def _ignore_excluded(directory: str, names: list[str]) -> set[str]:

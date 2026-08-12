@@ -2,7 +2,7 @@ import json
 
 import pytest
 
-from pyrepair.models import FailureReport, FileChange, PatchSnapshot
+from pyrepair.models import FailureReport, FileChange, ModelTurn, PatchSnapshot
 from pyrepair.review_agent import ReviewAgent
 from tests.fakes import FakeLLM, model_text_turn
 
@@ -117,3 +117,13 @@ def test_review_cannot_modify_snapshot_and_each_call_has_fresh_context():
     assert len(llm.requests[1][0]) == 2
     assert llm.requests[0][0][0]["role"] == "system"
     assert llm.requests[1][0][0]["role"] == "system"
+
+
+def test_review_preserves_model_token_usage() -> None:
+    content = '{"approved":true,"risk":"low","findings":[],"reason":"ok"}'
+    turn = ModelTurn(content, None, (), prompt_tokens=17, completion_tokens=5)
+
+    result = ReviewAgent(FakeLLM([turn])).review(failure_report(), patch_snapshot())
+
+    assert result.prompt_tokens == 17
+    assert result.completion_tokens == 5

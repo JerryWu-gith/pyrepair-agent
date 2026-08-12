@@ -1,0 +1,20 @@
+{
+  "version": 1,
+  "cases": [
+    {"id": "case_01", "category": "condition", "path": "cases/case_01", "title": "Discount eligibility branch"},
+    {"id": "case_02", "category": "condition", "path": "cases/case_02", "title": "Username access guard"},
+    {"id": "case_03", "category": "condition", "path": "cases/case_03", "title": "Shipping method fallback"},
+    {"id": "case_04", "category": "boundary", "path": "cases/case_04", "title": "Pagination upper bound"},
+    {"id": "case_05", "category": "boundary", "path": "cases/case_05", "title": "Inventory zero threshold"},
+    {"id": "case_06", "category": "boundary", "path": "cases/case_06", "title": "Score band endpoint"},
+    {"id": "case_07", "category": "exception", "path": "cases/case_07", "title": "Missing configuration error"},
+    {"id": "case_08", "category": "exception", "path": "cases/case_08", "title": "Payment exception propagation"},
+    {"id": "case_09", "category": "exception", "path": "cases/case_09", "title": "Invalid record error type"},
+    {"id": "case_10", "category": "state", "path": "cases/case_10", "title": "Cart item count update"},
+    {"id": "case_11", "category": "state", "path": "cases/case_11", "title": "Session logout state"},
+    {"id": "case_12", "category": "state", "path": "cases/case_12", "title": "Order transition ordering"},
+    {"id": "case_13", "category": "conversion", "path": "cases/case_13", "title": "Boolean text conversion"},
+    {"id": "case_14", "category": "conversion", "path": "cases/case_14", "title": "Date text conversion"},
+    {"id": "case_15", "category": "conversion", "path": "cases/case_15", "title": "Price cents conversion"}
+  ]
+}

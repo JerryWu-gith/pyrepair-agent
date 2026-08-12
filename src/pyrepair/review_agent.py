@@ -23,7 +23,11 @@ class ReviewAgent:
     ) -> ReviewResult:
         messages = _review_messages(report, snapshot)
         turn = self.client.complete(messages, [])
-        return _parse_review(turn.content)
+        return _parse_review(
+            turn.content,
+            prompt_tokens=turn.prompt_tokens,
+            completion_tokens=turn.completion_tokens,
+        )
 
 
 def _review_messages(
@@ -50,7 +54,12 @@ def _review_messages(
     ]
 
 
-def _parse_review(content: str) -> ReviewResult:
+def _parse_review(
+    content: str,
+    *,
+    prompt_tokens: int = 0,
+    completion_tokens: int = 0,
+) -> ReviewResult:
     try:
         data = json.loads(content)
         if not isinstance(data, dict):
@@ -74,6 +83,8 @@ def _parse_review(content: str) -> ReviewResult:
             risk=cast(Literal["low", "medium", "high"], risk),
             findings=tuple(findings),
             reason=reason,
+            prompt_tokens=prompt_tokens,
+            completion_tokens=completion_tokens,
         )
     except (json.JSONDecodeError, TypeError, ValueError):
         return ReviewResult(
@@ -81,4 +92,6 @@ def _parse_review(content: str) -> ReviewResult:
             risk="high",
             findings=("invalid_review_json",),
             reason="Review 输出无法安全解析",
+            prompt_tokens=prompt_tokens,
+            completion_tokens=completion_tokens,
         )

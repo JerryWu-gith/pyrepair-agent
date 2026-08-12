@@ -167,6 +167,15 @@ class RepairCoordinator:
 
                 self._emit("review")
                 review = self.reviewer_factory().review(failure_report, snapshot)
+                recorder.append_event(
+                    {
+                        "type": "model_turn",
+                        "role": "review",
+                        "attempt": attempt,
+                        "prompt_tokens": review.prompt_tokens,
+                        "completion_tokens": review.completion_tokens,
+                    }
+                )
                 attempt_record["review"] = _review_data(review)
                 if not review.approved:
                     evidence.extend(review.findings or (review.reason,))
@@ -241,6 +250,7 @@ class RepairCoordinator:
             recorder.append_event(
                 {
                     "type": "model_turn",
+                    "role": "repair",
                     "attempt": attempt,
                     "turn": turn_index,
                     "tool_calls": [call.name for call in turn.tool_calls],

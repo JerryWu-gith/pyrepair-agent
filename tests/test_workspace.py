@@ -95,3 +95,17 @@ def test_snapshot_rejects_non_utf8_changes_with_workspace_error(tmp_path):
         session.snapshot()
 
     session.cleanup()
+
+
+def test_snapshot_ignores_runtime_bytecode_created_by_pytest(tmp_path: Path) -> None:
+    repo = make_python_repo(tmp_path)
+    session = WorkspaceManager().create(repo)
+    cache = session.working / "__pycache__"
+    cache.mkdir()
+    (cache / "app.cpython-313.pyc").write_bytes(b"\x00\xff\x00\xfe")
+    (session.working / "app.py").write_text("value = 2\n", encoding="utf-8")
+
+    snapshot = session.snapshot()
+
+    assert [change.path for change in snapshot.changes] == ["app.py"]
+    session.cleanup()

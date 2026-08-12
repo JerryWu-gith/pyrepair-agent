@@ -94,6 +94,8 @@ class ReviewResult:
     risk: Literal["low", "medium", "high"]
     findings: tuple[str, ...]
     reason: str
+    prompt_tokens: int = 0
+    completion_tokens: int = 0
 
 
 @dataclass(frozen=True)

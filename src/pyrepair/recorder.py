@@ -116,7 +116,7 @@ def _jsonable(value: Any) -> Any:
 def _atomic_write(path: Path, text: str) -> None:
     temporary = path.with_suffix(path.suffix + ".tmp")
     try:
-        temporary.write_text(text, encoding="utf-8")
+        temporary.write_text(text, encoding="utf-8", newline="")
         temporary.replace(path)
     except OSError as exc:
         raise RecorderError(f"写入运行产物失败：{path.name}: {exc}") from exc

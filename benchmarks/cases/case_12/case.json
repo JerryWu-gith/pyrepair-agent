@@ -1,0 +1,1 @@
+{"id":"case_12","category":"state","bug_family":"missing_history_update","notes":"One production defect; benchmark tests are immutable."}

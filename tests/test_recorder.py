@@ -98,6 +98,28 @@ def test_failed_run_can_keep_empty_patch_file(tmp_path):
     assert report["status"] == "failed"
 
 
+def test_recorder_does_not_double_windows_newlines_in_patch(tmp_path: Path) -> None:
+    recorder = RunRecorder(tmp_path, run_id="windows-newlines")
+    snapshot = PatchSnapshot(
+        (
+            FileChange(
+                "src/app.py",
+                "value = 1\r\n",
+                "value = 2\r\n",
+                "--- a/src/app.py\r\n+++ b/src/app.py\r\n-value = 1\r\n+value = 2\r\n",
+                1,
+                1,
+            ),
+        )
+    )
+
+    recorder.write_patch(snapshot)
+
+    raw_patch = (recorder.run_dir / "fix.patch").read_bytes()
+    assert b"\r\r\n" not in raw_patch
+    assert raw_patch.count(b"\r\n") == 4
+
+
 @pytest.mark.parametrize("run_id", ["../escape", "folder/run", "folder\\run", ""])
 def test_recorder_rejects_unsafe_run_id(tmp_path, run_id):
     with pytest.raises(RecorderError, match="run-id"):

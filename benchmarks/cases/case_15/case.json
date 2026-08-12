@@ -1,0 +1,1 @@
+{"id":"case_15","category":"conversion","bug_family":"decimal_truncation","notes":"One production defect; benchmark tests are immutable."}

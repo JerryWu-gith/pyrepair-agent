@@ -1,0 +1,1 @@
+{"id":"case_08","category":"exception","bug_family":"swallowed_exception","notes":"One production defect; benchmark tests are immutable."}

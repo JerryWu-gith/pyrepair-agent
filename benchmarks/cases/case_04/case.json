@@ -1,0 +1,1 @@
+{"id":"case_04","category":"boundary","bug_family":"exclusive_upper_bound","notes":"One production defect; benchmark tests are immutable."}

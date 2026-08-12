@@ -4,7 +4,7 @@ from pathlib import Path
 import pytest
 
 from pyrepair.coordinator import CoordinatorError, RepairCoordinator
-from pyrepair.models import AgentRun, RepairRequest, ReviewResult
+from pyrepair.models import AgentRun, ModelTurn, RepairRequest, ReviewResult
 from pyrepair.models import TestRun as PytestRun
 from pyrepair.policy import PatchPolicyGate
 from pyrepair.pytest_parser import PytestParser
@@ -208,6 +208,47 @@ def test_coordinator_stops_when_review_rejects(tmp_path):
     assert result.status == "failed"
     assert result.failure_reason == "max_attempts_exceeded"
     assert "return a - b" in (repo / "app.py").read_text(encoding="utf-8")
+
+
+def test_coordinator_records_review_model_token_usage(tmp_path: Path) -> None:
+    repo = make_buggy_repo(tmp_path)
+
+    def fix_add(workspace: Path) -> None:
+        path = workspace / "app.py"
+        path.write_text(
+            path.read_text(encoding="utf-8").replace("return a - b", "return a + b"),
+            encoding="utf-8",
+        )
+
+    review_turn = ModelTurn(
+        '{"approved":true,"risk":"low","findings":[],"reason":"ok"}',
+        None,
+        (),
+        prompt_tokens=17,
+        completion_tokens=5,
+    )
+    coordinator = build_coordinator(
+        repo,
+        lambda registry: DirectWriteAgent(registry, fix_add),
+        lambda: ReviewAgent(FakeLLM([review_turn])),
+    )
+
+    result = coordinator.run(RepairRequest(repo=repo, max_attempts=1))
+
+    events = [
+        json.loads(line)
+        for line in (result.artifact_dir / "trace.jsonl").read_text(encoding="utf-8").splitlines()
+    ]
+    review_events = [event for event in events if event.get("role") == "review"]
+    assert review_events == [
+        {
+            "type": "model_turn",
+            "role": "review",
+            "attempt": 1,
+            "prompt_tokens": 17,
+            "completion_tokens": 5,
+        }
+    ]
 
 
 def test_coordinator_detects_new_full_suite_regression(tmp_path):
