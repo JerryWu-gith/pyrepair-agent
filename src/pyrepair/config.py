@@ -17,9 +17,16 @@ class AppConfig:
     pytest_timeout_seconds: float = 120.0
 
 
-def load_config(require_api_key: bool = True) -> AppConfig:
+def load_config(
+    require_api_key: bool = True,
+    model_override: str | None = None,
+) -> AppConfig:
     api_key = os.getenv("DEEPSEEK_API_KEY", "")
-    model = os.getenv("PYREPAIR_MODEL", "deepseek-v4-flash")
+    model = (
+        model_override
+        if model_override is not None
+        else os.getenv("PYREPAIR_MODEL", "deepseek-v4-flash")
+    )
     if require_api_key and not api_key:
         raise ConfigError("缺少 DEEPSEEK_API_KEY")
     if model not in ALLOWED_MODELS:
