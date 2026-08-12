@@ -1,0 +1,7 @@
+tests/test_account.py:20: in test_withdraw_rejects_large_amount
+    account.withdraw(200)
+account/service.py:18: in withdraw
+    raise ValueError("insufficient funds")
+E   ValueError: insufficient funds
+FAILED tests/test_account.py::test_withdraw_rejects_large_amount - ValueError: insufficient funds
+FAILED tests/test_profile.py::test_profile_name - AssertionError: wrong name

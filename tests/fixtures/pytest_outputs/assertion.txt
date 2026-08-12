@@ -1,0 +1,5 @@
+tests/test_account.py:12: in test_withdraw
+    assert account.balance == 20
+E   assert 30 == 20
+account/service.py:18: in withdraw
+FAILED tests/test_account.py::test_withdraw - AssertionError: balance was not updated
