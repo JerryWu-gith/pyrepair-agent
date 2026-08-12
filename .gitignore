@@ -11,3 +11,4 @@ build/
 .pyrepair/
 .superpowers/
 tmp/
+.worktrees/
