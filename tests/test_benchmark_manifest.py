@@ -67,6 +67,11 @@ def test_root_suite_does_not_collect_intentionally_failing_case_tests() -> None:
     ]
 
     try:
+        nested_basetemp = PROJECT_ROOT / "tmp" / f"pytest-p0-basetemp-{uuid4().hex}"
+        (PROJECT_ROOT / "tmp").mkdir(exist_ok=True)
+        nested_basetemp.mkdir()
+        created_child_dirs.append(nested_basetemp)
+
         sentinel_nodes = []
         for scratch_root, (filename, test_name) in zip(scratch_roots, sentinel_tests):
             scratch_root.mkdir(exist_ok=True)
@@ -81,7 +86,17 @@ def test_root_suite_does_not_collect_intentionally_failing_case_tests() -> None:
             sentinel_nodes.append(f"{relative_path.as_posix()}::{test_name}")
 
         completed = subprocess.run(
-            [sys.executable, "-m", "pytest", "--collect-only", "-q", "-p", "no:cacheprovider"],
+            [
+                sys.executable,
+                "-m",
+                "pytest",
+                "--collect-only",
+                "-q",
+                "-p",
+                "no:cacheprovider",
+                "--basetemp",
+                str(nested_basetemp),
+            ],
             cwd=PROJECT_ROOT,
             capture_output=True,
             text=True,
