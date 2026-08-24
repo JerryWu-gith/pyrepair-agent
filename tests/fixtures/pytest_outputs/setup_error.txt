@@ -1,0 +1,5 @@
+_______________ ERROR at setup of test_uses_database _______________
+tests/test_setup.py:5: in database
+    raise RuntimeError("database unavailable")
+E   RuntimeError: database unavailable
+ERROR tests/test_setup.py::test_uses_database

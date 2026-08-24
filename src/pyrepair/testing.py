@@ -8,6 +8,7 @@ from pathlib import Path
 
 from .models import TestRun
 from .pytest_capture import CaptureReportError, load_capture_report
+from .pytest_parser import parse_text_failures
 
 
 class TestRunner:
@@ -53,7 +54,9 @@ class TestRunner:
                 failures = load_capture_report(report_path)
                 capture_source = "plugin"
             except CaptureReportError:
-                failures, capture_source = (), "none"
+                raw = "\n".join(part for part in (completed.stdout, completed.stderr) if part)
+                failures = parse_text_failures(raw)
+                capture_source = "text" if failures else "none"
             return TestRun(
                 command=tuple(command),
                 exit_code=completed.returncode,

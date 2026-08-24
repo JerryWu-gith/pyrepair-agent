@@ -1,0 +1,6 @@
+=================================== FAILURES ===================================
+_______________________________ test_boom _______________________________
+tests/test_a.py:10: in test_boom
+    assert False
+E   AssertionError: boom
+FAILED tests/test_a.py::test_boom

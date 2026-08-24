@@ -1,6 +1,7 @@
 import subprocess
 from pathlib import Path
 
+from pyrepair.pytest_capture import CaptureReportError
 from pyrepair.testing import TestRunner as PytestRunner
 
 FIXTURES = Path(__file__).parent / "fixtures"
@@ -30,6 +31,20 @@ def test_runner_loads_structured_call_failure():
     assert result.capture_source == "plugin"
     assert result.failures[0].node_id == "test_fail.py::test_fail"
     assert result.failures[0].phase == "call"
+
+
+def test_runner_falls_back_to_text_when_plugin_report_is_invalid(monkeypatch):
+    def raise_capture_error(*args, **kwargs):
+        del args, kwargs
+        raise CaptureReportError("invalid_pytest_capture_report")
+
+    monkeypatch.setattr("pyrepair.testing.load_capture_report", raise_capture_error)
+
+    result = PytestRunner(5).run(FIXTURES / "failing_project")
+
+    assert result.exit_code == 1
+    assert result.capture_source == "text"
+    assert result.failures[0].node_id == "test_fail.py::test_fail"
 
 
 def test_runner_captures_setup_and_teardown_failures():

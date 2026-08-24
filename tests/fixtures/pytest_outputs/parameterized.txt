@@ -1,0 +1,6 @@
+=================================== FAILURES ===================================
+________________________ test_total[windows-path] ________________________
+tests\test_params.py:8: in test_total
+    assert 1 == 2
+E   assert 1 == 2
+FAILED tests\test_params.py::test_total[windows-path] - AssertionError: assert 1 == 2
