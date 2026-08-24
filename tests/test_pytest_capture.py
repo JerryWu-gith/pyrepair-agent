@@ -51,7 +51,27 @@ def test_load_capture_report_rejects_invalid_envelope(tmp_path, payload):
 
 @pytest.mark.parametrize(
     "payload",
-    ["{", '{"failures": {}}', '{"failures": [{"phase": "unknown"}]}'],
+    [
+        "{",
+        '{"version": 1, "exit_code": 1, "failures": {}}',
+        json.dumps(
+            {
+                "version": 1,
+                "exit_code": 1,
+                "failures": [
+                    {
+                        "node_id": "tests/test_app.py::test_add",
+                        "phase": "unknown",
+                        "outcome": "failed",
+                        "exception_type": "AssertionError",
+                        "summary": "assert -1 == 5",
+                        "traceback": "E assert -1 == 5",
+                        "duration_ms": 7,
+                    }
+                ],
+            }
+        ),
+    ],
 )
 def test_load_capture_report_rejects_invalid_payload(tmp_path, payload):
     path = tmp_path / "pytest-report.json"
@@ -86,7 +106,10 @@ def test_load_capture_report_rejects_invalid_failure_fields(tmp_path, field, val
     }
     failure[field] = value
     path = tmp_path / "pytest-report.json"
-    path.write_text(json.dumps({"failures": [failure]}), encoding="utf-8")
+    path.write_text(
+        json.dumps({"version": 1, "exit_code": 1, "failures": [failure]}),
+        encoding="utf-8",
+    )
 
     with pytest.raises(CaptureReportError, match="invalid_pytest_capture_report"):
         load_capture_report(path)
@@ -104,7 +127,10 @@ def test_load_capture_report_rejects_extra_fields(tmp_path):
         "extra": "not allowed",
     }
     path = tmp_path / "pytest-report.json"
-    path.write_text(json.dumps({"failures": [failure]}), encoding="utf-8")
+    path.write_text(
+        json.dumps({"version": 1, "exit_code": 1, "failures": [failure]}),
+        encoding="utf-8",
+    )
 
     with pytest.raises(CaptureReportError, match="invalid_pytest_capture_report"):
         load_capture_report(path)

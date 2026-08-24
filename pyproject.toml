@@ -25,7 +25,7 @@ dev = [
 pyrepair = "pyrepair.cli:app"
 
 [tool.hatch.build.targets.wheel]
-packages = ["src/pyrepair"]
+packages = ["src/pyrepair", "src/_pyrepair_agent_internal"]
 
 [tool.pytest.ini_options]
 addopts = "-m 'not live'"

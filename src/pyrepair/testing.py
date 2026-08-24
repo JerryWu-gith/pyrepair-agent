@@ -26,13 +26,16 @@ class TestRunner:
         ]
         if target:
             command.append(target)
-        command.extend(["-p", "pyrepair.pytest_plugin"])
+        command.extend(["-p", "_pyrepair_agent_internal.pytest_plugin"])
 
         report_path = repo / ".pyrepair" / "internal" / "pytest-report.json"
+        report_is_fresh = False
         try:
             report_path.unlink(missing_ok=True)
         except OSError:
             pass
+        else:
+            report_is_fresh = True
         environment = os.environ.copy()
         environment["PYREPAIR_PYTEST_REPORT"] = str(report_path)
 
@@ -50,10 +53,13 @@ class TestRunner:
                 errors="replace",
                 check=False,
             )
-            try:
-                failures = load_capture_report(report_path)
-                capture_source = "plugin"
-            except CaptureReportError:
+            if report_is_fresh:
+                try:
+                    failures = load_capture_report(report_path)
+                    capture_source = "plugin"
+                except CaptureReportError:
+                    report_is_fresh = False
+            if not report_is_fresh:
                 raw = "\n".join(part for part in (completed.stdout, completed.stderr) if part)
                 failures = parse_text_failures(raw)
                 capture_source = "text" if failures else "none"

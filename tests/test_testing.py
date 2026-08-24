@@ -1,3 +1,4 @@
+import json
 import subprocess
 from pathlib import Path
 
@@ -45,6 +46,98 @@ def test_runner_falls_back_to_text_when_plugin_report_is_invalid(monkeypatch):
     assert result.exit_code == 1
     assert result.capture_source == "text"
     assert result.failures[0].node_id == "test_fail.py::test_fail"
+
+
+def test_runner_ignores_stale_report_when_cleanup_and_plugin_write_fail(monkeypatch, tmp_path):
+    repo = tmp_path / "candidate"
+    repo.mkdir()
+    (repo / "pytest.ini").write_text("[pytest]\naddopts = -p no:cacheprovider\n", encoding="utf-8")
+    (repo / "test_current.py").write_text(
+        "def test_current_failure():\n    assert False, 'current failure'\n",
+        encoding="utf-8",
+    )
+    (repo / "conftest.py").write_text(
+        """from __future__ import annotations
+
+import os
+from pathlib import Path
+
+_write_text = Path.write_text
+
+
+def fail_capture_report_write(path, *args, **kwargs):
+    if path == Path(os.environ["PYREPAIR_PYTEST_REPORT"]):
+        raise OSError("simulated capture report write failure")
+    return _write_text(path, *args, **kwargs)
+
+
+Path.write_text = fail_capture_report_write
+""",
+        encoding="utf-8",
+    )
+    report_path = repo / ".pyrepair" / "internal" / "pytest-report.json"
+    report_path.parent.mkdir(parents=True)
+    report_path.write_text(
+        json.dumps(
+            {
+                "version": 1,
+                "exit_code": 1,
+                "failures": [
+                    {
+                        "node_id": "test_stale.py::test_stale_failure",
+                        "phase": "call",
+                        "outcome": "failed",
+                        "exception_type": "AssertionError",
+                        "summary": "stale failure",
+                        "traceback": "E AssertionError: stale failure",
+                        "duration_ms": 1,
+                    }
+                ],
+            }
+        ),
+        encoding="utf-8",
+    )
+    real_unlink = Path.unlink
+
+    def fail_capture_report_cleanup(path, *args, **kwargs):
+        if path == report_path:
+            raise OSError("simulated stale report cleanup failure")
+        return real_unlink(path, *args, **kwargs)
+
+    monkeypatch.setattr(Path, "unlink", fail_capture_report_cleanup)
+
+    result = PytestRunner(5).run(repo)
+
+    stale_report = json.loads(report_path.read_text(encoding="utf-8"))
+    assert stale_report["failures"][0]["node_id"] == "test_stale.py::test_stale_failure"
+    assert result.exit_code == 1
+    assert result.capture_source == "text"
+    assert [failure.node_id for failure in result.failures] == [
+        "test_current.py::test_current_failure"
+    ]
+
+
+def test_runner_plugin_is_not_shadowed_by_candidate_pyrepair_package(tmp_path):
+    repo = tmp_path / "candidate"
+    candidate_package = repo / "pyrepair"
+    candidate_package.mkdir(parents=True)
+    (candidate_package / "__init__.py").write_text(
+        "raise RuntimeError('candidate pyrepair package was imported')\n",
+        encoding="utf-8",
+    )
+    (repo / "pytest.ini").write_text("[pytest]\naddopts = -p no:cacheprovider\n", encoding="utf-8")
+    (repo / "test_current.py").write_text(
+        "def test_current_failure():\n    assert False, 'current failure'\n",
+        encoding="utf-8",
+    )
+
+    result = PytestRunner(5).run(repo)
+
+    assert result.exit_code == 1
+    assert result.capture_source == "plugin"
+    assert [failure.node_id for failure in result.failures] == [
+        "test_current.py::test_current_failure"
+    ]
 
 
 def test_runner_captures_setup_and_teardown_failures():
@@ -96,7 +189,7 @@ def test_runner_uses_argument_list_without_shell(monkeypatch, tmp_path):
 
     assert result.exit_code == 0
     assert target in captured["command"]
-    assert captured["command"][-2:] == ["-p", "pyrepair.pytest_plugin"]
+    assert captured["command"][-2:] == ["-p", "_pyrepair_agent_internal.pytest_plugin"]
     assert captured["kwargs"]["cwd"] == tmp_path
     assert captured["kwargs"]["env"]["PYREPAIR_PYTEST_REPORT"] == str(
         tmp_path / ".pyrepair" / "internal" / "pytest-report.json"
