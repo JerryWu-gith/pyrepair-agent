@@ -79,6 +79,14 @@ def test_text_fallback_accepts_pytest_8_and_9_shapes(line):
     assert parse_text_failures(line)[0].node_id == "tests/test_a.py::test_x"
 
 
+@pytest.mark.parametrize(
+    "text",
+    ["FAILED malformed", "ERROR malformed", "malformed::node FAILED", "not a pytest summary"],
+)
+def test_text_fallback_rejects_unrecognized_summary_text(text):
+    assert parse_text_failures(text) == ()
+
+
 def make_failure(
     node_id: str, phase: Literal["setup", "call", "teardown", "collection"]
 ) -> PytestFailure:
@@ -119,6 +127,29 @@ def test_text_fallback_extracts_exception_from_pytest9_summary_without_suffix():
     assert failure.node_id == "tests/test_a.py::test_boom"
     assert failure.exception_type == "AssertionError"
     assert failure.summary == "boom"
+
+
+def test_text_fallback_keeps_each_pytest9_failure_traceback_independent():
+    text = """\
+_______________________________ test_first _______________________________
+tests/test_many.py:4: in test_first
+    raise AssertionError("first failure")
+E   AssertionError: first failure
+_______________________________ test_second ______________________________
+tests/test_many.py:9: in test_second
+    raise ValueError("second failure")
+E   ValueError: second failure
+FAILED tests/test_many.py::test_first
+FAILED tests/test_many.py::test_second
+"""
+
+    first, second = parse_text_failures(text)
+
+    assert (first.exception_type, first.summary) == ("AssertionError", "first failure")
+    assert "test_second" not in first.traceback
+    assert (second.exception_type, second.summary) == ("ValueError", "second failure")
+    assert "tests/test_many.py:9" in second.traceback
+    assert "test_first" not in second.traceback
 
 
 def test_text_fallback_marks_setup_errors_and_parser_uses_structured_failure():

@@ -6,11 +6,12 @@ from collections.abc import Iterable
 from .models import FailureReport, PytestFailure, TestRun
 
 ANSI_RE = re.compile(r"\x1b\[[0-?]*[ -/]*[@-~]")
+NODE_ID_PATTERN = r"(?P<node>[\w./\\-]+\.py(?:::\S+)?)"
 SUMMARY_PATTERNS = (
-    re.compile(r"^FAILED\s+(?P<node>\S+)(?:\s+-\s+(?P<detail>.*))?$"),
-    re.compile(r"^ERROR\s+(?P<node>\S+)(?:\s+-\s+(?P<detail>.*))?$"),
-    re.compile(r"^(?P<node>\S+::\S+)\s+(?P<kind>FAILED|ERROR)$"),
-    re.compile(r"^ERROR\s+collecting\s+(?P<node>\S+)(?:\s+-\s+(?P<detail>.*))?$"),
+    re.compile(rf"^FAILED\s+{NODE_ID_PATTERN}(?:\s+-\s+(?P<detail>.*))?$"),
+    re.compile(rf"^ERROR\s+{NODE_ID_PATTERN}(?:\s+-\s+(?P<detail>.*))?$"),
+    re.compile(rf"^{NODE_ID_PATTERN}\s+(?P<kind>FAILED|ERROR)$"),
+    re.compile(rf"^ERROR\s+collecting\s+{NODE_ID_PATTERN}(?:\s+-\s+(?P<detail>.*))?$"),
 )
 PHASE_PRIORITY = {"call": 0, "setup": 1, "teardown": 2, "collection": 3}
 PATH_RE = re.compile(r"(?m)^([\w./\\-]+\.py):\d+")
@@ -44,14 +45,10 @@ class PytestParser:
 def parse_text_failures(text: str) -> tuple[PytestFailure, ...]:
     lines = ANSI_RE.sub("", text).splitlines()
     failures: list[PytestFailure] = []
-    previous_summary = -1
     for summary_index, line in enumerate(lines):
-        for pattern in SUMMARY_PATTERNS:
-            match = pattern.fullmatch(line.strip())
-            if match:
-                failures.append(_parse_summary(lines, summary_index, previous_summary, match))
-                previous_summary = summary_index
-                break
+        match = _summary_match(line)
+        if match:
+            failures.append(_parse_summary(lines, summary_index, match))
     return tuple(failures)
 
 
@@ -75,15 +72,14 @@ def extract_failed_node_ids(text: str) -> set[str]:
 def _parse_summary(
     lines: list[str],
     summary_index: int,
-    previous_summary: int,
     match: re.Match[str],
 ) -> PytestFailure:
     node_id = re.sub(r"/+", "/", match.group("node").replace("\\", "/"))
-    traceback = _adjacent_traceback(lines, summary_index, previous_summary, node_id)
+    traceback = _adjacent_traceback(lines, summary_index, node_id)
     exception_type, summary = _failure_detail(traceback, match.groupdict().get("detail"))
     return PytestFailure(
         node_id=node_id,
-        phase=_failure_phase(lines, summary_index, previous_summary, match),
+        phase=_failure_phase(traceback, match),
         outcome="failed",
         exception_type=exception_type,
         summary=summary,
@@ -93,9 +89,9 @@ def _parse_summary(
 
 
 def _adjacent_traceback(
-    lines: list[str], summary_index: int, previous_summary: int, node_id: str
+    lines: list[str], summary_index: int, node_id: str
 ) -> str:
-    candidates = lines[previous_summary + 1 : summary_index]
+    candidates = lines[:summary_index]
     leaf = node_id.rsplit("::", 1)[-1]
     section_start = next(
         (
@@ -115,8 +111,14 @@ def _adjacent_traceback(
             ),
             None,
         )
-        if next_section is not None:
-            candidates = candidates[:next_section]
+        next_summary = next(
+            (index for index, line in enumerate(candidates) if _summary_match(line)),
+            None,
+        )
+        boundaries = (boundary for boundary in (next_section, next_summary) if boundary is not None)
+        boundary = min(boundaries, default=None)
+        if boundary is not None:
+            candidates = candidates[:boundary]
     traceback = "\n".join(candidates).strip().replace("\\", "/")
     return re.sub(r"/+", "/", traceback)
 
@@ -135,12 +137,10 @@ def _failure_detail(traceback: str, detail: str | None) -> tuple[str | None, str
 
 
 def _failure_phase(
-    lines: list[str],
-    summary_index: int,
-    previous_summary: int,
+    traceback: str,
     match: re.Match[str],
 ) -> str:
-    context = "\n".join(lines[previous_summary + 1 : summary_index]).lower()
+    context = traceback.lower()
     if "error at setup" in context:
         return "setup"
     if "error at teardown" in context:
@@ -152,3 +152,10 @@ def _failure_phase(
 
 def _related_paths(traceback: str) -> tuple[str, ...]:
     return tuple(dict.fromkeys(path.replace("\\", "/") for path in PATH_RE.findall(traceback)))
+
+
+def _summary_match(line: str) -> re.Match[str] | None:
+    return next(
+        (match for pattern in SUMMARY_PATTERNS if (match := pattern.fullmatch(line.strip()))),
+        None,
+    )
