@@ -45,7 +45,7 @@ class DeepSeekClient:
             api_key=api_key,
             base_url=base_url,
             timeout=timeout,
-            max_retries=0,
+            max_retries=0,  #关掉 SDK 自带重试，自己实现重试（更可控）
         )
 
     def complete(
@@ -70,14 +70,14 @@ class DeepSeekClient:
                 raise
             except Exception as exc:
                 if _is_retryable(exc) and attempt < self.max_retries:
-                    self.sleep(float(2**attempt))
+                    self.sleep(float(2**attempt))  #指数退避 → 等 1 秒、2 秒
                     continue
-                safe_message = str(exc).replace(self.api_key, "[REDACTED]")
+                safe_message = str(exc).replace(self.api_key, "[REDACTED]")  # 错误消息里把 api_key 替换掉，API key 不能进日志/异常
                 raise DeepSeekError(f"deepseek_request_failed:{safe_message}") from exc
         raise DeepSeekError("deepseek_request_failed:retry_loop_exhausted")
 
 
-def _to_model_turn(response: Any) -> ModelTurn:
+def _to_model_turn(response: Any) -> ModelTurn:   # 把 LLM 返回的原始对象翻译成内部的 ModelTurn
     choice = response.choices[0]
     message = choice.message
     calls: list[ToolCallRequest] = []

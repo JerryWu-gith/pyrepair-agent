@@ -30,23 +30,23 @@ class RepairAgent:
         report: FailureReport,
         previous_evidence: tuple[str, ...] = (),
     ) -> AgentRun:
-        messages = _initial_messages(report, previous_evidence)
-        turns: list[ModelTurn] = []
+        messages = _initial_messages(report, previous_evidence)  # 初始消息
+        turns: list[ModelTurn] = []   # 记录所有轮次
         calls_used = 0
 
         while calls_used < self.max_tool_calls:
             turn = self.client.complete(messages, self.registry.schemas())
             turns.append(turn)
             messages.append(_assistant_message(turn))
-            if not turn.tool_calls:
+            if not turn.tool_calls:  # LLM 不用工具了
                 return AgentRun(completed=True, turns=tuple(turns))
 
-            for call in turn.tool_calls:
+            for call in turn.tool_calls:  # 逐个执行工具
                 if calls_used >= self.max_tool_calls:
                     return AgentRun(False, tuple(turns), "max_tool_calls_exceeded")
                 calls_used += 1
-                result = self.registry.execute(call.name, call.arguments)
-                messages.append(
+                result = self.registry.execute(call.name, call.arguments)  # 执行
+                messages.append(   # 工具结果放回对话
                     {
                         "role": "tool",
                         "tool_call_id": call.id,

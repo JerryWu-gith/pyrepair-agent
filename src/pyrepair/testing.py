@@ -14,12 +14,12 @@ class TestRunner:
 
     def run(self, repo: Path, target: str | None = None) -> TestRun:
         command = [
-            sys.executable,
-            "-m",
+            sys.executable,  # 当前 Python 解释器
+            "-m",    # 以模块方式运行 pytest
             "pytest",
-            "-q",
-            "--tb=short",
-            "--disable-warnings",
+            "-q",   # quiet，精简输出
+            "--tb=short",   # 短 traceback
+            "--disable-warnings",  # 关掉警告刷屏
         ]
         if target:
             command.append(target)

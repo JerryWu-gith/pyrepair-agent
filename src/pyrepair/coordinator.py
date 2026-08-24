@@ -54,14 +54,14 @@ class RepairCoordinator:
         self.progress = progress or (lambda stage: None)
 
     def run(self, request: RepairRequest) -> RunResult:
-        session = self.workspaces.create(request.repo)
+        session = self.workspaces.create(request.repo)  # 建沙箱：baseline + working
         recorder: RunRecorder | None = None
         failure_report: FailureReport | None = None
         attempt_records: list[dict[str, Any]] = []
         try:
-            recorder = self.recorder_factory(request.repo)
+            recorder = self.recorder_factory(request.repo)  # 建记录器
             self._emit("baseline")
-            baseline = self.runner.run(session.working, request.test_target)
+            baseline = self.runner.run(session.working, request.test_target)  #返回Testrun
             recorder.append_pytest("BASELINE", baseline)
             recorder.append_event(
                 {"type": "baseline", "exit_code": baseline.exit_code, "duration_ms": baseline.duration_ms}
@@ -90,7 +90,7 @@ class RepairCoordinator:
                     result.artifact_dir,
                 )
 
-            failure_report = self.parser.parse(baseline)
+            failure_report = self.parser.parse(baseline)  #TestRun → FailureReport
             if baseline.exit_code == 0:
                 return self._finish(
                     recorder,
@@ -120,7 +120,7 @@ class RepairCoordinator:
                 )
 
             baseline_text = "\n".join(
-                part for part in (baseline.stdout, baseline.stderr) if part
+                part for part in (baseline.stdout, baseline.stderr) if part  #抓取所有失败
             )
             baseline_failures = extract_failed_node_ids(baseline_text)
             baseline_failures.add(failure_report.node_id)
@@ -128,15 +128,15 @@ class RepairCoordinator:
 
             for attempt in range(1, request.max_attempts + 1):
                 self._emit(f"attempt:{attempt}")
-                session.restore_working_from_baseline()
-                registry = self.registry_factory(session, failure_report.node_id)
+                session.restore_working_from_baseline()   #一键重置工作区，把 agent 的沙箱（working）删掉重建回干净的基线状态（baseline）
+                registry = self.registry_factory(session, failure_report.node_id)  #重置工具
                 agent_run = self.agent_factory(registry).run(
                     failure_report,
                     tuple(evidence),
                 )
-                self._record_agent_turns(recorder, attempt, agent_run)
-                snapshot = session.snapshot()
-                check = self.policy.check(snapshot)
+                self._record_agent_turns(recorder, attempt, agent_run) # 记录 token 用量
+                snapshot = session.snapshot()     # agent 改完 → 对比 baseline/working 生成补丁
+                check = self.policy.check(snapshot)  # 策略预检
                 attempt_record = {
                     "attempt": attempt,
                     "agent_completed": agent_run.completed,
@@ -146,7 +146,7 @@ class RepairCoordinator:
                     "policy_violations": list(check.violations),
                 }
 
-                if not snapshot.changes:
+                if not snapshot.changes:  # 没生成补丁
                     evidence.append("no_patch_generated")
                     attempt_record["outcome"] = "no_patch_generated"
                     attempt_records.append(attempt_record)

@@ -29,15 +29,15 @@ class Verifier:
                 target_passed=False,
                 full_suite_passed=False,
                 regression_failures=(),
-                patch_check=self.policy.check(snapshot),
+                patch_check=self.policy.check(snapshot),  #  复查规则
                 target_run=target,
                 full_run=None,
             )
 
         full = self.runner.run(repo)
-        full_text = "\n".join(part for part in (full.stdout, full.stderr) if part)
-        current_failures = extract_failed_node_ids(full_text)
-        regressions = tuple(sorted(current_failures - baseline_failures))
+        full_text = "\n".join(part for part in (full.stdout, full.stderr) if part)  # 拼接全部失败
+        current_failures = extract_failed_node_ids(full_text)  # 提取全部失败node_id
+        regressions = tuple(sorted(current_failures - baseline_failures))  # 修复后现在挂的测试 - 修复前本来就挂的测试 = 回归
         full_suite_passed = (
             full.exit_code == 0 and not full.timed_out and full.launch_error is None
         )

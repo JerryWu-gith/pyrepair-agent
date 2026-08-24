@@ -35,36 +35,36 @@ class RunRecorder:
         if not SAFE_RUN_ID_RE.fullmatch(selected_run_id):
             raise RecorderError("run-id 只能包含字母、数字、点、下划线和连字符")
         self.sensitive_values = tuple(value for value in sensitive_values if value)
-        self.run_dir = repo.resolve() / ".pyrepair" / "runs" / selected_run_id
+        self.run_dir = repo.resolve() / ".pyrepair" / "runs" / selected_run_id  #每场运行一个独立目录，永不冲突
         try:
-            self.run_dir.mkdir(parents=True, exist_ok=False)
-            _atomic_write(self.run_dir / "fix.patch", "")
-            _atomic_write(self.run_dir / "report.json", "{}\n")
-            _atomic_write(self.run_dir / "trace.jsonl", "")
-            _atomic_write(self.run_dir / "pytest.log", "")
+            self.run_dir.mkdir(parents=True, exist_ok=False)  # 建目录（不存在才建）
+            _atomic_write(self.run_dir / "fix.patch", "")    # 四个文件都先建空壳 # 最终补丁
+            _atomic_write(self.run_dir / "report.json", "{}\n")  # 运行报告
+            _atomic_write(self.run_dir / "trace.jsonl", "")  # 事件流
+            _atomic_write(self.run_dir / "pytest.log", "")  # 测试日志 pytest 原始输出
         except OSError as exc:
             raise RecorderError(f"创建运行产物目录失败：{exc}") from exc
 
-    def write_patch(self, snapshot: PatchSnapshot) -> None:
+    def write_patch(self, snapshot: PatchSnapshot) -> None:  #  → fix.patch 只在成功时被调（coordinator.py:201），fix.patch 出现 = 修复成功，最终补丁
         _atomic_write(
             self.run_dir / "fix.patch",
             self._redact(snapshot.text),
         )
 
-    def write_report(self, report: Any) -> None:
+    def write_report(self, report: Any) -> None:  # → report.json 只在 _finish 被调（coordinator.py:280），所有出口都汇聚到这里，写一份结构化、带缩进的完整报告
         safe = self._redact(_jsonable(report))
         text = json.dumps(safe, ensure_ascii=False, indent=2) + "\n"
         _atomic_write(self.run_dir / "report.json", text)
 
-    def append_event(self, event: dict[str, Any]) -> None:
+    def append_event(self, event: dict[str, Any]) -> None:  # → trace.jsonl JSONL 格式（每行一个 JSON 对象，无需缩进）。被各种事件调用：baseline 事件、model_turn、run_finished
         path = self.run_dir / "trace.jsonl"
         safe = self._redact(_jsonable(event))
         line = json.dumps(safe, ensure_ascii=False) + "\n"
         _atomic_write(path, path.read_text(encoding="utf-8") + line)
 
-    def append_pytest(self, section: str, run: TestRun) -> None:
+    def append_pytest(self, section: str, run: TestRun) -> None:  # → pytest.log 人类可读的分段日志，每段带 ===== 标题 ===== 分隔。被 coordinator 调用于：基线、每轮目标测试、每轮全量回归
         path = self.run_dir / "pytest.log"
-        command = " ".join(run.command)
+        command = " ".join(run.command)  # 把片段还原成可读的命令行
         block = (
             f"===== {section} =====\n"
             f"command: {command}\n"
@@ -79,7 +79,8 @@ class RunRecorder:
         )
         _atomic_write(path, path.read_text(encoding="utf-8") + self._redact(block))
 
-    def _redact(self, value: Any) -> Any:
+    def _redact(self, value: Any) -> Any:  # 递归打码，两层防御 键名命中（SENSITIVE_KEYS）→ 直接打码 ，值命中（sensitive_values 里的 api_key 明文）→ 替换成 [REDACTED]
+
         if isinstance(value, dict):
             return {
                 key: (
@@ -99,11 +100,11 @@ class RunRecorder:
         return value
 
 
-def _jsonable(value: Any) -> Any:
+def _jsonable(value: Any) -> Any:  # json.dumps 会嫌弃的类型，它全部提前转换成json.dumps能接受的样子
     if is_dataclass(value) and not isinstance(value, type):
         return _jsonable(asdict(value))
     if isinstance(value, Path):
-        return value.as_posix()
+        return value.as_posix()  # Path → 字符串
     if isinstance(value, dict):
         return {str(key): _jsonable(item) for key, item in value.items()}
     if isinstance(value, (list, tuple)):

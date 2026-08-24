@@ -15,7 +15,7 @@ class PytestParser:
         raw = "\n".join(part for part in (run.stdout, run.stderr) if part)
         match = FAILED_RE.search(raw)
         related = tuple(
-            dict.fromkeys(path.replace("\\", "/") for path in PATH_RE.findall(raw))
+            dict.fromkeys(path.replace("\\", "/") for path in PATH_RE.findall(raw))  # fromkeys 把值都设成 None不在乎值，只借用键集合来实现去重+保序
         )
         if not match:
             return FailureReport(

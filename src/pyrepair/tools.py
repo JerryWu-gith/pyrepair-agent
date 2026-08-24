@@ -54,7 +54,7 @@ class BaseTool:
         }
 
     def execute(self, arguments: dict[str, Any]) -> ToolResult:
-        raise NotImplementedError
+        raise NotImplementedError  #抽象方法，子类必须自己实现，基类里抛 NotImplementedError 兜底
 
 
 class ReadFileTool(BaseTool):
@@ -71,7 +71,7 @@ class ReadFileTool(BaseTool):
         self.root = root
 
     def execute(self, arguments: dict[str, Any]) -> ToolResult:
-        if set(arguments) != {"path"} or not isinstance(arguments.get("path"), str):
+        if set(arguments) != {"path"} or not isinstance(arguments.get("path"), str):  #参数键必须是 "path"，值必须是字符串
             return ToolResult(False, error="invalid_arguments")
         try:
             path = resolve_inside(self.root, arguments["path"])
@@ -82,7 +82,7 @@ class ReadFileTool(BaseTool):
         if path.suffix.lower() not in READABLE_SUFFIXES:
             return ToolResult(False, error="unsupported_text_file")
         try:
-            content = path.read_text(encoding="utf-8")
+            content = path.read_text(encoding="utf-8")  # Read file
         except UnicodeDecodeError:
             return ToolResult(False, error="unsupported_text_file")
         if len(content) > MAX_READ_CHARS:
@@ -109,7 +109,7 @@ class SearchCodeTool(BaseTool):
         if set(arguments) != {"query"} or not isinstance(query, str) or not query:
             return ToolResult(False, error="invalid_arguments")
         matches: list[str] = []
-        for path in sorted(self.root.rglob("*.py")):
+        for path in sorted(self.root.rglob("*.py")):   # 遍历所有 py 文件
             try:
                 lines = path.read_text(encoding="utf-8").splitlines()
             except UnicodeDecodeError:
