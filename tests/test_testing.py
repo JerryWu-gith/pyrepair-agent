@@ -12,7 +12,8 @@ def test_runner_returns_pass_result():
     assert result.exit_code == 0
     assert result.timed_out is False
     assert result.launch_error is None
-    assert result.command[-3:] == ("-q", "--tb=short", "--disable-warnings")
+    assert result.command[2:6] == ("pytest", "-q", "--tb=short", "--disable-warnings")
+    assert result.capture_source == "plugin"
 
 
 def test_runner_returns_failed_result_without_throwing():
@@ -21,6 +22,23 @@ def test_runner_returns_failed_result_without_throwing():
     assert result.exit_code == 1
     assert result.timed_out is False
     assert "FAILED" in result.stdout
+
+
+def test_runner_loads_structured_call_failure():
+    result = PytestRunner(5).run(FIXTURES / "failing_project")
+
+    assert result.capture_source == "plugin"
+    assert result.failures[0].node_id == "test_fail.py::test_fail"
+    assert result.failures[0].phase == "call"
+
+
+def test_runner_captures_setup_and_teardown_failures():
+    result = PytestRunner(5).run(FIXTURES / "pytest_capture_project")
+
+    assert {(item.node_id, item.phase) for item in result.failures} == {
+        ("test_phases.py::test_setup_error", "setup"),
+        ("test_phases.py::test_teardown_error", "teardown"),
+    }
 
 
 def test_runner_marks_timeout(monkeypatch, tmp_path):
@@ -62,6 +80,10 @@ def test_runner_uses_argument_list_without_shell(monkeypatch, tmp_path):
     result = PytestRunner(5).run(tmp_path, target)
 
     assert result.exit_code == 0
-    assert captured["command"][-1] == target
+    assert target in captured["command"]
+    assert captured["command"][-2:] == ["-p", "pyrepair.pytest_plugin"]
     assert captured["kwargs"]["cwd"] == tmp_path
+    assert captured["kwargs"]["env"]["PYREPAIR_PYTEST_REPORT"] == str(
+        tmp_path / ".pyrepair" / "internal" / "pytest-report.json"
+    )
     assert captured["kwargs"]["shell"] is False

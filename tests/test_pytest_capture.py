@@ -10,6 +10,8 @@ def test_load_capture_report_converts_valid_json(tmp_path):
     path.write_text(
         json.dumps(
             {
+                "version": 1,
+                "exit_code": 1,
                 "failures": [
                     {
                         "node_id": "tests/test_app.py::test_add",
@@ -27,6 +29,24 @@ def test_load_capture_report_converts_valid_json(tmp_path):
     )
 
     assert load_capture_report(path)[0].phase == "call"
+
+
+@pytest.mark.parametrize(
+    "payload",
+    [
+        {"exit_code": 1, "failures": []},
+        {"version": 2, "exit_code": 1, "failures": []},
+        {"version": True, "exit_code": 1, "failures": []},
+        {"version": 1, "exit_code": True, "failures": []},
+        {"version": 1, "exit_code": 1, "failures": [], "extra": "not allowed"},
+    ],
+)
+def test_load_capture_report_rejects_invalid_envelope(tmp_path, payload):
+    path = tmp_path / "pytest-report.json"
+    path.write_text(json.dumps(payload), encoding="utf-8")
+
+    with pytest.raises(CaptureReportError, match="invalid_pytest_capture_report"):
+        load_capture_report(path)
 
 
 @pytest.mark.parametrize(

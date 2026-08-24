@@ -26,8 +26,12 @@ _PHASES = {"setup", "call", "teardown", "collection"}
 def load_capture_report(path: Path) -> tuple[PytestFailure, ...]:
     try:
         payload = json.loads(path.read_text(encoding="utf-8"))
-        if not isinstance(payload, dict) or set(payload) != {"failures"}:
-            raise TypeError("report must contain only failures")
+        if not isinstance(payload, dict) or set(payload) != {"version", "exit_code", "failures"}:
+            raise TypeError("report envelope is invalid")
+        if payload["version"] != 1 or isinstance(payload["version"], bool):
+            raise ValueError("report version is invalid")
+        if not isinstance(payload["exit_code"], int) or isinstance(payload["exit_code"], bool):
+            raise TypeError("report exit code is invalid")
         items = payload["failures"]
         if not isinstance(items, list):
             raise TypeError("failures must be a list")
