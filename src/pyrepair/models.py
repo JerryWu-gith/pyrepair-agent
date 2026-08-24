@@ -16,6 +16,17 @@ class RepairRequest:
 
 
 @dataclass(frozen=True)
+class PytestFailure:
+    node_id: str
+    phase: Literal["setup", "call", "teardown", "collection"]
+    outcome: str
+    exception_type: str | None
+    summary: str
+    traceback: str
+    duration_ms: int
+
+
+@dataclass(frozen=True)
 class TestRun:
     command: tuple[str, ...]
     exit_code: int | None
@@ -24,6 +35,8 @@ class TestRun:
     duration_ms: int
     timed_out: bool = False
     launch_error: str | None = None
+    failures: tuple[PytestFailure, ...] = ()
+    capture_source: Literal["plugin", "text", "none"] = "none"
 
 
 @dataclass(frozen=True)

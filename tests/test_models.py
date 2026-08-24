@@ -1,6 +1,40 @@
 import pytest
 
-from pyrepair.models import FileChange, PatchCheck, PatchSnapshot, VerificationResult
+from pyrepair.models import (
+    FileChange,
+    PatchCheck,
+    PatchSnapshot,
+    PytestFailure,
+    VerificationResult,
+)
+from pyrepair.models import TestRun as PytestRun
+
+
+def test_test_run_keeps_structured_failures_with_legacy_defaults():
+    failure = PytestFailure(
+        "tests/test_app.py::test_add",
+        "call",
+        "failed",
+        "AssertionError",
+        "assert -1 == 5",
+        "E assert -1 == 5",
+        7,
+    )
+    run = PytestRun(
+        ("python", "-m", "pytest"),
+        1,
+        "",
+        "",
+        10,
+        failures=(failure,),
+        capture_source="plugin",
+    )
+    legacy = PytestRun(("python", "-m", "pytest"), 1, "", "", 10)
+
+    assert run.failures == (failure,)
+    assert run.capture_source == "plugin"
+    assert legacy.failures == ()
+    assert legacy.capture_source == "none"
 
 
 def test_patch_snapshot_text_joins_changes_in_order():
