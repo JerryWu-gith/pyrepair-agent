@@ -4,7 +4,6 @@ from pathlib import Path
 
 from .models import PatchSnapshot, VerificationResult
 from .policy import PatchPolicyGate
-from .pytest_parser import extract_failed_node_ids
 from .testing import TestRunner
 
 
@@ -35,8 +34,7 @@ class Verifier:
             )
 
         full = self.runner.run(repo)
-        full_text = "\n".join(part for part in (full.stdout, full.stderr) if part)  # 拼接全部失败
-        current_failures = extract_failed_node_ids(full_text)  # 提取全部失败node_id
+        current_failures = {item.node_id for item in full.failures}
         regressions = tuple(sorted(current_failures - baseline_failures))  # 修复后现在挂的测试 - 修复前本来就挂的测试 = 回归
         full_suite_passed = (
             full.exit_code == 0 and not full.timed_out and full.launch_error is None

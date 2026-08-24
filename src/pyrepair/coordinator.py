@@ -14,7 +14,7 @@ from .models import (
     VerificationResult,
 )
 from .policy import PatchPolicyGate
-from .pytest_parser import PytestParser, extract_failed_node_ids
+from .pytest_parser import PytestParser
 from .recorder import RunRecorder
 from .testing import TestRunner
 from .tools import ToolRegistry
@@ -64,7 +64,13 @@ class RepairCoordinator:
             baseline = self.runner.run(session.working, request.test_target)  #返回Testrun
             recorder.append_pytest("BASELINE", baseline)
             recorder.append_event(
-                {"type": "baseline", "exit_code": baseline.exit_code, "duration_ms": baseline.duration_ms}
+                {
+                    "type": "baseline",
+                    "exit_code": baseline.exit_code,
+                    "duration_ms": baseline.duration_ms,
+                    "capture_source": baseline.capture_source,
+                    "failure_count": len(baseline.failures),
+                }
             )
             if baseline.timed_out:
                 result = self._finish(
@@ -90,7 +96,7 @@ class RepairCoordinator:
                     result.artifact_dir,
                 )
 
-            failure_report = self.parser.parse(baseline)  #TestRun → FailureReport
+            failure_report = self.parser.parse(baseline, request.test_target)  #TestRun → FailureReport
             if baseline.exit_code == 0:
                 return self._finish(
                     recorder,
@@ -119,10 +125,7 @@ class RepairCoordinator:
                     attempt_records=attempt_records,
                 )
 
-            baseline_text = "\n".join(
-                part for part in (baseline.stdout, baseline.stderr) if part  #抓取所有失败
-            )
-            baseline_failures = extract_failed_node_ids(baseline_text)
+            baseline_failures = {item.node_id for item in baseline.failures}
             baseline_failures.add(failure_report.node_id)
             evidence: list[str] = []
 

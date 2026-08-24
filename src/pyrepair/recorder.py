@@ -72,6 +72,8 @@ class RunRecorder:
             f"duration_ms: {run.duration_ms}\n"
             f"timed_out: {run.timed_out}\n"
             f"launch_error: {run.launch_error or ''}\n"
+            f"capture_source: {run.capture_source}\n"
+            f"failure_count: {len(run.failures)}\n"
             "--- stdout ---\n"
             f"{run.stdout}\n"
             "--- stderr ---\n"

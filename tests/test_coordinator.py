@@ -4,7 +4,8 @@ from pathlib import Path
 import pytest
 
 from pyrepair.coordinator import CoordinatorError, RepairCoordinator
-from pyrepair.models import AgentRun, ModelTurn, RepairRequest, ReviewResult
+from pyrepair.deepseek import DeepSeekError
+from pyrepair.models import AgentRun, ModelTurn, PytestFailure, RepairRequest, ReviewResult
 from pyrepair.models import TestRun as PytestRun
 from pyrepair.policy import PatchPolicyGate
 from pyrepair.pytest_parser import PytestParser
@@ -117,6 +118,197 @@ def test_coordinator_dry_run_never_builds_agent_or_reviewer(tmp_path):
     assert result.status == "dry_run"
     assert result.attempts == 0
     assert (result.artifact_dir / "fix.patch").read_text(encoding="utf-8") == ""
+
+
+class BaselineRunner:
+    def run(self, repo, target=None):
+        del repo, target
+        return PytestRun(
+            ("python", "-m", "pytest"),
+            1,
+            "unrelated text summary",
+            "",
+            10,
+            failures=(
+                PytestFailure(
+                    "tests/test_a.py::test_a",
+                    "call",
+                    "failed",
+                    "AssertionError",
+                    "other",
+                    "full other traceback",
+                    1,
+                ),
+                PytestFailure(
+                    "tests/test_z.py::test_z",
+                    "call",
+                    "failed",
+                    "AssertionError",
+                    "add",
+                    "full selected traceback",
+                    1,
+                ),
+            ),
+            capture_source="plugin",
+        )
+
+
+class StaticRunRunner:
+    def __init__(self, run):
+        self.run_result = run
+
+    def run(self, repo, target=None):
+        del repo, target
+        return self.run_result
+
+
+def test_coordinator_prefers_requested_structured_failure_and_records_capture_metadata(tmp_path):
+    repo = make_buggy_repo(tmp_path)
+    coordinator = build_coordinator(
+        repo,
+        lambda registry: None,
+        lambda: None,
+        runner=BaselineRunner(),
+    )
+
+    result = coordinator.run(
+        RepairRequest(repo=repo, test_target="tests/test_z.py::test_z", dry_run=True)
+    )
+
+    report = json.loads((result.artifact_dir / "report.json").read_text(encoding="utf-8"))
+    events = [
+        json.loads(line)
+        for line in (result.artifact_dir / "trace.jsonl").read_text(encoding="utf-8").splitlines()
+    ]
+    assert report["failure"]["node_id"] == "tests/test_z.py::test_z"
+    assert "traceback" not in report["failure"]
+    assert events[0] == {
+        "type": "baseline",
+        "exit_code": 1,
+        "duration_ms": 10,
+        "capture_source": "plugin",
+        "failure_count": 2,
+    }
+
+
+def test_coordinator_records_already_passing_baseline(tmp_path):
+    repo = make_buggy_repo(tmp_path)
+    coordinator = build_coordinator(
+        repo,
+        lambda registry: None,
+        lambda: None,
+        runner=StaticRunRunner(
+            PytestRun(
+                ("python", "-m", "pytest"),
+                0,
+                "1 passed",
+                "",
+                10,
+                capture_source="plugin",
+            )
+        ),
+    )
+
+    result = coordinator.run(RepairRequest(repo=repo))
+
+    assert result.status == "failed"
+    assert result.failure_reason == "tests_already_pass"
+
+
+def test_coordinator_records_baseline_launch_error(tmp_path):
+    repo = make_buggy_repo(tmp_path)
+    coordinator = build_coordinator(
+        repo,
+        lambda registry: None,
+        lambda: None,
+        runner=StaticRunRunner(
+            PytestRun(
+                ("python", "-m", "pytest"),
+                None,
+                "",
+                "",
+                10,
+                launch_error="python unavailable",
+            )
+        ),
+    )
+
+    with pytest.raises(CoordinatorError, match="无法启动") as captured:
+        coordinator.run(RepairRequest(repo=repo))
+
+    report = json.loads((captured.value.artifact_dir / "report.json").read_text(encoding="utf-8"))
+    assert report["failure_reason"] == "baseline_launch_error"
+
+
+def test_coordinator_records_incomplete_agent_after_patch(tmp_path):
+    repo = make_buggy_repo(tmp_path)
+
+    class IncompleteAgent:
+        def __init__(self, registry):
+            self.registry = registry
+
+        def run(self, report, previous_evidence=()):
+            del report, previous_evidence
+            path = self.registry.workspace / "app.py"
+            path.write_text(
+                path.read_text(encoding="utf-8").replace("return a - b", "return a + b"),
+                encoding="utf-8",
+            )
+            return AgentRun(False, (), "model_stopped")
+
+    coordinator = build_coordinator(
+        repo,
+        IncompleteAgent,
+        lambda: None,
+        runner=BaselineRunner(),
+    )
+
+    result = coordinator.run(RepairRequest(repo=repo, max_attempts=1))
+
+    report = json.loads((result.artifact_dir / "report.json").read_text(encoding="utf-8"))
+    assert report["attempts"][0]["outcome"] == "model_stopped"
+
+
+def test_coordinator_records_unparseable_baseline(tmp_path):
+    repo = make_buggy_repo(tmp_path)
+    coordinator = build_coordinator(
+        repo,
+        lambda registry: None,
+        lambda: None,
+        runner=StaticRunRunner(
+            PytestRun(("python", "-m", "pytest"), 1, "unparseable output", "", 10)
+        ),
+    )
+
+    result = coordinator.run(RepairRequest(repo=repo))
+
+    assert result.status == "failed"
+    assert result.failure_reason == "unparseable_pytest_output"
+
+
+def test_coordinator_records_deepseek_error(tmp_path):
+    repo = make_buggy_repo(tmp_path)
+
+    class RaisingAgent:
+        def __init__(self, registry):
+            self.registry = registry
+
+        def run(self, report, previous_evidence=()):
+            del report, previous_evidence
+            raise DeepSeekError("service unavailable")
+
+    coordinator = build_coordinator(
+        repo,
+        RaisingAgent,
+        lambda: None,
+        runner=BaselineRunner(),
+    )
+
+    with pytest.raises(CoordinatorError, match="DeepSeek") as captured:
+        coordinator.run(RepairRequest(repo=repo))
+
+    report = json.loads((captured.value.artifact_dir / "report.json").read_text(encoding="utf-8"))
+    assert report["failure_reason"] == "deepseek_error"
 
 
 def test_coordinator_stops_after_three_attempts_without_patch(tmp_path):

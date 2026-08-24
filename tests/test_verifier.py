@@ -1,7 +1,7 @@
 from collections import deque
 from pathlib import Path
 
-from pyrepair.models import FileChange, PatchSnapshot
+from pyrepair.models import FileChange, PatchSnapshot, PytestFailure
 from pyrepair.models import TestRun as PytestRun
 from pyrepair.policy import PatchPolicyGate
 from pyrepair.verifier import Verifier
@@ -17,8 +17,30 @@ class FakeTestRunner:
         return self.runs.popleft()
 
 
-def make_run(exit_code: int, stdout: str) -> PytestRun:
-    return PytestRun(("python", "-m", "pytest"), exit_code, stdout, "", 10)
+def make_failure(node_id: str, phase: str = "call") -> PytestFailure:
+    return PytestFailure(
+        node_id,
+        phase,
+        "failed",
+        "AssertionError",
+        "boom",
+        "E AssertionError: boom",
+        1,
+    )
+
+
+def make_run(
+    exit_code: int, stdout: str, failures: tuple[PytestFailure, ...] = ()
+) -> PytestRun:
+    return PytestRun(
+        ("python", "-m", "pytest"),
+        exit_code,
+        stdout,
+        "",
+        10,
+        failures=failures,
+        capture_source="plugin",
+    )
 
 
 def allowed_snapshot() -> PatchSnapshot:
@@ -64,6 +86,7 @@ def test_verify_reports_new_failure_as_regression():
             make_run(
                 1,
                 "FAILED tests/test_other.py::test_other - AssertionError: unexpected",
+                (make_failure("tests/test_other.py::test_other"),),
             ),
         ]
     )
@@ -85,7 +108,11 @@ def test_verify_does_not_label_baseline_failure_as_new_regression():
     runner = FakeTestRunner(
         [
             make_run(0, "1 passed"),
-            make_run(1, f"FAILED {original} - AssertionError: still failing"),
+            make_run(
+                1,
+                f"FAILED {original} - AssertionError: still failing",
+                (make_failure(original),),
+            ),
         ]
     )
 
@@ -142,3 +169,21 @@ def test_verify_rechecks_policy_after_tests_pass():
     assert result.full_suite_passed is True
     assert result.patch_check.allowed is False
     assert result.passed is False
+
+
+def test_verifier_uses_structured_failures_for_regression(tmp_path):
+    full = make_run(
+        1,
+        "changed summary",
+        (make_failure("tests/test_other.py::test_other"),),
+    )
+    result = Verifier(
+        FakeTestRunner([make_run(0, "1 passed"), full]), PatchPolicyGate()
+    ).verify(
+        tmp_path,
+        "tests/test_app.py::test_add",
+        {"tests/test_app.py::test_add"},
+        allowed_snapshot(),
+    )
+
+    assert result.regression_failures == ("tests/test_other.py::test_other",)
