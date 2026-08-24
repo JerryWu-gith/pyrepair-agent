@@ -1,8 +1,10 @@
 import json
+import shutil
 import subprocess
 import sys
 from collections import Counter
 from pathlib import Path
+from uuid import uuid4
 
 PROJECT_ROOT = Path(__file__).parents[1]
 MANIFEST_PATH = PROJECT_ROOT / "benchmarks" / "manifest.json"
@@ -57,16 +59,42 @@ def test_each_case_starts_with_exactly_one_failed_test() -> None:
 
 
 def test_root_suite_does_not_collect_intentionally_failing_case_tests() -> None:
-    completed = subprocess.run(
-        [sys.executable, "-m", "pytest", "--collect-only", "-q", "-p", "no:cacheprovider"],
-        cwd=PROJECT_ROOT,
-        capture_output=True,
-        text=True,
-        encoding="utf-8",
-        timeout=30,
-        check=False,
-    )
-    output = completed.stdout + completed.stderr
+    created_child_dirs: list[Path] = []
+    scratch_roots = [PROJECT_ROOT / "tmp", PROJECT_ROOT / ".pyrepair"]
+    sentinel_tests = [
+        ("test_tmp_sentinel.py", "test_tmp_sentinel"),
+        ("test_pyrepair_sentinel.py", "test_pyrepair_sentinel"),
+    ]
 
-    assert completed.returncode == 0, output
-    assert "benchmarks/cases" not in output.replace("\\", "/")
+    try:
+        sentinel_nodes = []
+        for scratch_root, (filename, test_name) in zip(scratch_roots, sentinel_tests):
+            scratch_root.mkdir(exist_ok=True)
+            child_dir = scratch_root / f"pytest-p0-{uuid4().hex}"
+            child_dir.mkdir()
+            created_child_dirs.append(child_dir)
+            (child_dir / filename).write_text(
+                f"def {test_name}():\n    pass\n",
+                encoding="utf-8",
+            )
+            relative_path = (child_dir / filename).relative_to(PROJECT_ROOT)
+            sentinel_nodes.append(f"{relative_path.as_posix()}::{test_name}")
+
+        completed = subprocess.run(
+            [sys.executable, "-m", "pytest", "--collect-only", "-q", "-p", "no:cacheprovider"],
+            cwd=PROJECT_ROOT,
+            capture_output=True,
+            text=True,
+            encoding="utf-8",
+            timeout=30,
+            check=False,
+        )
+        output = completed.stdout + completed.stderr
+        normalized_output = output.replace("\\", "/")
+
+        assert completed.returncode == 0, output
+        assert "benchmarks/cases" not in normalized_output
+        assert all(node not in normalized_output for node in sentinel_nodes)
+    finally:
+        for child_dir in created_child_dirs:
+            shutil.rmtree(child_dir)
