@@ -1,152 +1,207 @@
 # PyRepair Agent
 
-PyRepair Agent 是一个面向 Python 项目的安全 pytest 故障诊断与候选补丁 CLI：它使用 DeepSeek V4 Tool Calling 在临时工作区修改源码，并由确定性策略、独立 Review 和全量回归共同决定结果。
+> 面向 Python/pytest 项目的安全候选补丁 Agent：让 LLM 负责诊断与最小修改，让确定性规则、独立 Review 和 pytest 决定能否交付。
+
+PyRepair 不是通用编码助手，而是一套范围明确、结果可验证的自动修复闭环。它在临时副本中复现失败，通过 DeepSeek Tool Calling 收集源码证据并生成候选 Diff，最后经过 Policy、只读 Review、目标测试和全量回归共同判定。原仓库不会被 Agent 直接修改。
 
 ## 30 秒看懂
 
 ```text
-> pyrepair fix --repo examples/buggy_bank
-阶段：baseline
-阶段：attempt:1
-阶段：policy
-阶段：review
-阶段：verify
-状态：success
-尝试次数：1
-产物目录：examples/buggy_bank/.pyrepair/runs/<run-id>
+pytest 失败
+  → 结构化捕获失败证据
+  → AST 仓库索引与确定性上下文
+  → Repair Agent 调用 8 个受限工具
+  → Agent State / Loop Guard 防止打转和未验证收工
+  → Policy → 独立 Review → 目标测试 → 全量回归
+  → 输出候选 patch、报告、trace 和 pytest 日志
 ```
 
-PyRepair 不会直接修改原仓库。成功后会留下 `fix.patch`、`report.json`、`trace.jsonl` 和 `pytest.log`，由开发者检查并决定是否应用补丁。
+一次修复最多进行 3 次 attempt；每次 attempt 都从同一 baseline 恢复，不叠加上一轮未经验证的改动。失败证据会被压缩成结构化反馈，交给下一轮重新制定策略。
 
-## 安装
+## 为什么不是“再做一个 Claude Code”
 
-需要 Python 3.11 或更高版本。
+Claude Code、Codex 等通用 Coding Agent 追求开放式开发能力；PyRepair 选择一个更窄、也更容易被工程化验证的问题：**修复一个已经能够被 pytest 复现的 Python 故障**。
 
-```powershell
-python -m venv .venv
-.\.venv\Scripts\Activate.ps1
-python -m pip install -e .
-```
+| 通用 Coding Agent | PyRepair |
+| --- | --- |
+| 面向搜索、开发、重构等开放任务 | 聚焦 pytest 故障诊断与候选补丁 |
+| 通常允许更广泛的文件和命令操作 | 只暴露 8 个受限工具 |
+| 任务完成标准依赖用户目标 | 成功条件由 Policy、Review 和真实 pytest 明确定义 |
+| 适合直接参与日常开发 | 适合演示可控 Agent Loop、安全门禁与可复现评测 |
 
-开发环境额外安装测试工具：
+项目价值不在于替代成熟通用 Agent，而在于把 **Context Engineering、Tool Use、Agent State、Loop Guard、Feedback Loop 和 Evaluation** 落到一条可以解释、测试和复现的修复链路中。
 
-```powershell
-python -m pip install -e ".[dev]"
-```
+## 核心技术亮点
 
-## 本地使用
+| 机制 | 工程价值 |
+| --- | --- |
+| AST 仓库索引 | 定位函数、类、方法、import 邻居，减少盲目全文搜索 |
+| 确定性上下文构建 | 按失败证据排序，并以字符预算控制输入规模 |
+| 8 个受限工具 | 只允许读取、搜索、符号查询、精确替换、Diff 和目标测试 |
+| Agent State + Loop Guard | 检测重复调用、重复错误和无进展循环 |
+| 结构化重试反馈 | 把补丁、策略、Review、目标测试和回归证据传给下一轮 |
+| 多重验证门禁 | Policy、独立 Review、目标测试、全量回归共同判定 |
+| 结构化 pytest 捕获 | 优先使用内部 pytest plugin 获取失败对象，异常时保守降级到文本解析 |
+| 可审计产物 | 保存 patch、JSON 报告、JSONL trace 和 pytest 原始日志 |
 
-在当前 PowerShell 会话中设置 DeepSeek API Key。不要把 Key 写进源码、README 或提交记录。
-
-```powershell
-Set-Item -Path Env:DEEPSEEK_API_KEY -Value "你的 API Key"
-```
-
-先只诊断，不调用 LLM：
-
-```powershell
-pyrepair fix --repo examples/buggy_bank --dry-run
-```
-
-生成并验证候选补丁：
-
-```powershell
-pyrepair fix --repo examples/buggy_bank --model deepseek-v4-flash
-```
-
-也可以指定一个 pytest node id：
-
-```powershell
-pyrepair fix tests/test_bank.py::test_withdraw --repo examples/buggy_bank
-```
-
-运行结束后，先查看产物，不要盲目应用补丁：
-
-```powershell
-$runDir = Get-ChildItem examples/buggy_bank/.pyrepair/runs -Directory |
-    Sort-Object LastWriteTime -Descending |
-    Select-Object -First 1
-Get-Content "$($runDir.FullName)/fix.patch"
-Get-Content "$($runDir.FullName)/report.json"
-```
-
-## 工作流
+## Agent Loop
 
 ```mermaid
 flowchart LR
-    A["失败的 Python 项目"] --> B["临时 baseline / working 副本"]
-    B --> C["pytest 失败解析"]
-    C --> D["Repair Agent + 5 个受限工具"]
-    D --> E["确定性 PatchPolicyGate"]
-    E --> F["独立只读 Review Agent"]
-    F --> G["目标测试 + 全量测试回归"]
-    G --> H["patch / report / trace / pytest log"]
+    A[pytest 失败] --> B[结构化失败捕获]
+    B --> C[AST 索引 + 排序上下文]
+    C --> D[Repair Agent]
+    D --> E[8 个受限工具]
+    E --> D
+    D --> F[Agent State + Loop Guard]
+    D --> G[候选 Diff]
+    G --> H[Policy Gate]
+    H --> I[独立 Review]
+    I --> J[目标测试 + 全量回归]
+    J -->|失败证据| K[结构化重试反馈]
+    K --> D
+    J -->|全部通过| L[patch / report / trace / pytest log]
 ```
 
-详细组件与数据流见 [架构说明](docs/architecture.md)。
+这里有两个嵌套循环：
+
+1. **外层 attempt loop**：最多 3 次，每轮恢复干净 working 副本，再经历 Policy、Review 和 Verify。
+2. **内层 model-tool loop**：默认最多执行 8 次工具调用；运行时状态会阻止重复调用、重复错误、连续无进展，以及修改后没有查看 Diff 或运行目标测试就提前结束。
+
+更完整的组件与数据流见 [架构说明](docs/architecture.md)。
+
+## 快速开始
+
+要求 Python 3.11+，并准备可用的 DeepSeek API Key。
+
+```powershell
+git clone https://github.com/JerryWu-gith/pyrepair-agent.git
+cd pyrepair-agent
+
+python -m venv .venv
+.\.venv\Scripts\Activate.ps1
+python -m pip install -e .
+
+$env:DEEPSEEK_API_KEY = "your-api-key"
+pyrepair fix --repo examples/buggy_bank
+```
+
+也可以指定某个 pytest node：
+
+```powershell
+pyrepair fix "tests/test_orders.py::test_total" --repo D:\path\to\project
+```
+
+只复现和解析失败、不调用 LLM：
+
+```powershell
+pyrepair fix --repo D:\path\to\project --dry-run
+```
+
+每次运行会在目标项目的 `.pyrepair/runs/<run-id>/` 生成：
+
+| 产物 | 用途 |
+| --- | --- |
+| `fix.patch` | 通过全部门禁后的候选补丁；失败时为空 |
+| `report.json` | 基线、attempt、Policy、Review 和 Verify 的结构化结论 |
+| `trace.jsonl` | 模型轮次、工具调用统计与阶段事件 |
+| `pytest.log` | baseline、目标测试和全量测试原始输出 |
 
 ## 安全边界
 
-- 所有修改发生在临时副本，原仓库保持不变。
-- Agent 只有读取、搜索、精确替换、查看 Diff、运行已识别目标测试 5 个工具。
-- 只允许修改 Python 源码；禁止修改测试、CI、`.env`、密钥和依赖锁文件。
-- 单次候选补丁最多修改 3 个文件、80 行增删。
-- 禁止新增 `skip`/`xfail`、删除断言或弱化断言。
-- 候选补丁必须通过独立只读 Review、目标测试和全量测试回归。
-- 成功由 Python 规则和 pytest 判定，不由 LLM 自我声明。
-- CLI 只生成候选补丁，不自动应用、不 Commit、不 Push、不创建 PR。
+PyRepair 的默认原则是“生成候选补丁，不替开发者做最终写入决定”：
 
-## 测试层次
+- 不直接修改原仓库，只操作系统临时目录中的 baseline/working 副本。
+- 不自动应用候选补丁，不自动 Commit，不自动 Push，也不自动创建 PR。
+- Agent 不能执行任意 Shell，只能调用注册表中的 8 个工具。
+- `replace_text` 只允许对单个、唯一匹配的 Python 源码片段做精确替换。
+- Policy 拦截测试文件、环境文件、CI、锁文件、密钥、skip/xfail、断言弱化和超范围补丁。
+- Review 输出无法解析时默认拒绝；目标测试未通过时不会继续全量验证。
+- 仓库内容、失败信息、历史反馈和工具结果都标记为不可信数据，不能覆盖 System Prompt。
 
-默认测试完全离线，使用 FakeLLM，不需要 API Key，也不会产生模型费用：
+这里的“临时隔离工作区”不是 OS 或容器级安全沙箱。pytest 会执行目标仓库代码，因此**只应对可信仓库运行 PyRepair**。
 
-```powershell
-python -m pytest
-python -m pytest --cov=pyrepair --cov-report=term-missing -q
-python -m ruff check src tests benchmarks
-```
+## Benchmark 实测
 
-显式运行付费 live smoke：
-
-```powershell
-python -m pytest -m live tests/test_live_deepseek.py -v
-```
-
-运行可断点续跑的 benchmark：
+评测命令：
 
 ```powershell
 python benchmarks/run_benchmark.py --model deepseek-v4-flash
 ```
 
-## Benchmark 实测结果
+2026-08-26 使用 `deepseek-v4-flash` 对 15 个固定、可复现的单 Bug 用例进行了一次全新非续跑评测：
 
-固定数据集包含条件、边界、异常、状态和类型转换 5 类共 15 个独立单 Bug pytest 项目。完整原始记录和失败说明见 [benchmark 报告](docs/benchmark-results.md)。
-
-| 指标 | DeepSeek V4 Flash 实测值 |
+| 指标 | 结果 |
 | --- | ---: |
-| 端到端成功 | 13 / 15 |
-| 成功率 | 86.7% |
-| 首轮成功率 | 80.0% |
-| 平均耗时 | 17.50 秒 |
-| Prompt / Completion Token | 109,134 / 16,741 |
+| 用例数 | 15 |
+| 端到端成功 | 15 |
+| 端到端成功率 | 100.0% |
+| 首轮成功率 | 100.0% |
+| 平均尝试次数 | 1.00 |
+| 平均耗时 | 16.39 秒 |
 | 新增回归 | 0 |
-| 策略拒绝 | 0 |
+| Policy 拒绝 | 0 |
 
-这是整个 PyRepair 流程的端到端成功率，不是单独的模型准确率。`case_05` 和 `case_08` 因 pytest 9 摘要格式未被当前解析器识别，在调用 LLM 前失败；这些失败保留在报告和原始 JSONL 中。DeepSeek V4 Pro 尚未评测。
+这是 PyRepair 整条修复链路的端到端成功率，不是单独的模型准确率。每个成功用例都必须完成失败捕获、模型修复、Policy、Review、目标测试和全量回归；模型输出具有非确定性，单次结果不代表未来运行或真实大型仓库的固定成功率。
 
-## 局限
+- 详细报告：[docs/benchmark-results.md](docs/benchmark-results.md)
+- 本次原始证据：[benchmarks/results/20260826T133842Z-deepseek-v4-flash.jsonl](benchmarks/results/20260826T133842Z-deepseek-v4-flash.jsonl)
+- `deepseek-v4-pro`：尚未评测
 
-- MVP 目前只处理解析到的第一个 pytest 失败，主要面向单 Bug、小补丁任务。
-- 当前解析器要求 `FAILED <node> - <detail>` 摘要形式，尚未覆盖 pytest 9 的无后缀失败摘要。
-- 修改工具只支持 Python 文件内的单次精确文本替换，不执行任意 Shell 命令。
-- 模型输出可能失败或产生不合格补丁，因此产物仍需要开发者审查。
-- 当前公开 benchmark 只验证了 `deepseek-v4-flash`，不声称 Pro 模型效果。
+## 测试与复现
+
+运行全部离线测试：
+
+```powershell
+python -m pytest -m "not live"
+```
+
+运行静态检查和构建：
+
+```powershell
+python -m ruff check src tests benchmarks
+python -m build
+```
+
+显式验证真实 DeepSeek Tool Calling（会产生 API 调用）：
+
+```powershell
+python -m pytest -m live tests/test_live_deepseek.py -v
+```
+
+Benchmark runner 会为每个 case 创建独立临时副本，并逐条追加 JSONL。评测失败不会被删除；`--resume` 只用于中断恢复，正式刷新指标时不使用。
+
+## 代码导读
+
+建议按下面顺序阅读：
+
+| 文件 | 重点 |
+| --- | --- |
+| `src/pyrepair/cli.py` | Typer 入口和依赖装配 |
+| `src/pyrepair/coordinator.py` | baseline、attempt、Policy、Review、Verify 总编排 |
+| `src/pyrepair/testing.py` | pytest 子进程与结构化捕获降级 |
+| `src/pyrepair/repository_index.py` | AST 符号与 import 索引 |
+| `src/pyrepair/context_builder.py` | 确定性打分、字符预算和防注入包裹 |
+| `src/pyrepair/tools.py` | 8 个工具及权限边界 |
+| `src/pyrepair/agent_state.py` | 工具调用状态、指纹和验证标志 |
+| `src/pyrepair/loop_guard.py` | 重复、错误、无进展与收工门禁 |
+| `src/pyrepair/repair_agent.py` | DeepSeek model-tool loop |
+| `src/pyrepair/feedback.py` | 跨 attempt 的结构化失败反馈 |
+| `src/pyrepair/verifier.py` | 目标测试、全量测试、回归和 Policy 复查 |
+
+## 当前局限
+
+- 只支持 Python/pytest，且修复动作只有已有文件内的精确文本替换。
+- 当前成功条件要求全量测试退出码为 0；包含无关预存在失败的仓库需要更明确的 baseline 语义。
+- 测试和敏感文件保护主要依赖路径分类与静态规则，不能替代容器或虚拟机隔离。
+- AST 索引在一次 attempt 内不会随编辑增量刷新，修改后的语义查询可能返回旧位置。
+- 15 个 Benchmark case 是小型固定单 Bug 任务，不等价于大型真实仓库或 SWE-bench。
+- 当前只适配 DeepSeek V4 Flash/Pro 的 OpenAI-compatible API；Pro 尚未完成正式评测。
 
 ## 路线图
 
-- 支持 pytest 9 无后缀摘要和更多失败输出形态。
-- 支持多个失败测试的聚类诊断与逐项验证。
-- 增加开发者确认后的安全补丁应用命令。
-- 在手动 GitHub Actions 演示稳定后，再评估 Issue 到候选 PR 的可选流程。
-
-面试演示可直接照着 [2–3 分钟演示脚本](docs/demo-script.md) 操作。
+1. 建立全量 baseline，区分预存在失败与候选补丁引入的回归。
+2. 加固 `conftest.py`、非标准测试文件名和测试中立化修改的确定性检测。
+3. 在源码编辑后增量刷新 AST 索引，并让测试失败模式变化参与进展判断。
+4. 扩充多文件、多失败和真实开源仓库评测集，增加多次重复运行的稳定性指标。
+5. 保持默认仅生成候选补丁；自动应用、Commit、Push 和 PR 不进入安全默认路径。
