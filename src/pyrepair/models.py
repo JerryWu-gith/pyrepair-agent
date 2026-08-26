@@ -86,10 +86,28 @@ class ModelTurn:
 
 
 @dataclass(frozen=True)
+class AgentStatus:
+    attempt: int
+    max_attempts: int
+    tool_calls_used: int
+    max_tool_calls: int
+    files_read: tuple[str, ...]
+    changed_files: tuple[str, ...]
+    last_tool: str | None
+    last_error: str | None
+    repeated_call_count: int
+    no_progress_steps: int
+    diff_inspected: bool
+    target_test_run: bool
+
+
+@dataclass(frozen=True)
 class AgentRun:
     completed: bool
     turns: tuple[ModelTurn, ...]
     failure_reason: str | None = None
+    final_status: AgentStatus | None = None
+    guard_events: tuple[str, ...] = ()
 
 
 @dataclass(frozen=True)

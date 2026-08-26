@@ -1,6 +1,7 @@
 import pytest
 
 from pyrepair.models import (
+    AgentRun,
     FileChange,
     PatchCheck,
     PatchSnapshot,
@@ -35,6 +36,13 @@ def test_test_run_keeps_structured_failures_with_legacy_defaults():
     assert run.capture_source == "plugin"
     assert legacy.failures == ()
     assert legacy.capture_source == "none"
+
+
+def test_agent_run_keeps_state_fields_optional_for_legacy_callers():
+    run = AgentRun(True, ())
+
+    assert run.final_status is None
+    assert run.guard_events == ()
 
 
 def test_patch_snapshot_text_joins_changes_in_order():
