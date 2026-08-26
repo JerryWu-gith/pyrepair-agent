@@ -1,14 +1,11 @@
 from __future__ import annotations
 
 import json
-import re
 from dataclasses import asdict, dataclass
 from typing import Any
 
 from .models import AgentStatus
 from .tools import ToolResult
-
-_PYTEST_DURATION = re.compile(r"\b\d+(?:\.\d+)?s\b")
 
 
 @dataclass(frozen=True)
@@ -134,11 +131,10 @@ def _stable_result(name: str, result: ToolResult) -> dict[str, object]:
     if name != "run_target_test":
         return payload
 
-    data = dict(result.data)
-    data.pop("duration_ms", None)
-    for key in ("stdout_tail", "stderr_tail"):
-        value = data.get(key)
-        if isinstance(value, str):
-            data[key] = _PYTEST_DURATION.sub("<duration>", value)
-    payload["data"] = data
+    stable_keys = ("target", "passed", "exit_code", "timed_out")
+    payload["data"] = {
+        key: result.data[key]
+        for key in stable_keys
+        if key in result.data
+    }
     return payload

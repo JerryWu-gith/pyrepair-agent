@@ -80,7 +80,7 @@ def test_test_duration_and_pytest_timing_do_not_count_as_progress():
             "target": "tests/test_app.py::test_add",
             "passed": False,
             "exit_code": 1,
-            "stdout_tail": "1 failed in 0.11s",
+            "stdout_tail": "object at 0xAAA; 1 failed in 0.11s",
             "stderr_tail": "",
             "duration_ms": 110,
             "timed_out": False,
@@ -89,7 +89,7 @@ def test_test_duration_and_pytest_timing_do_not_count_as_progress():
     second = ok_result(
         {
             **first.data,
-            "stdout_tail": "1 failed in 0.99s",
+            "stdout_tail": "object at 0xBBB; 1 failed in 0.99s",
             "duration_ms": 990,
         }
     )

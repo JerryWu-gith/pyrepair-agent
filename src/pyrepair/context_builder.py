@@ -26,6 +26,7 @@ SCORES = {
 
 _PATH_LINE = re.compile(r"(?P<path>[A-Za-z0-9_./\\-]+\.py):(?P<line>\d+)")
 _IDENTIFIER = re.compile(r"[A-Za-z_][A-Za-z0-9_]{2,}")
+_REPOSITORY_CLOSE_TAG = re.compile(r"</\s*repository_data\s*>", re.IGNORECASE)
 
 
 @dataclass(frozen=True)
@@ -286,7 +287,10 @@ def _bounded_line_range(
 def _wrap_untrusted(path: str, raw: str) -> tuple[str, bool]:
     header = f'<repository_data path="{escape(path, quote=True)}" trusted="false">\n'
     footer = "\n</repository_data>"
-    safe_raw = escape(raw, quote=False)
+    safe_raw = _REPOSITORY_CLOSE_TAG.sub(
+        lambda _match: r"<\/repository_data>",
+        raw,
+    )
     available = MAX_SNIPPET_CHARS - len(header) - len(footer)
     marker = "\n[TRUNCATED]"
     truncated = len(safe_raw) > available
