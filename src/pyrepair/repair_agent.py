@@ -1,10 +1,13 @@
 from __future__ import annotations
 
 import json
+from dataclasses import asdict
 from typing import Any
 
+from .agent_state import AgentRuntimeState
 from .context_builder import ContextBundle, empty_context_bundle
 from .deepseek import ModelClient
+from .loop_guard import CompletionPolicy, GuardDecision, LoopGuard
 from .models import AgentRun, FailureReport, ModelTurn
 from .tools import ToolRegistry
 
@@ -29,31 +32,76 @@ class RepairAgent:
     def run(
         self,
         report: FailureReport,
-        previous_evidence: tuple[str, ...] = (),
+        previous_evidence: tuple[Any, ...] = (),
         *,
         context: ContextBundle | None = None,
+        attempt: int = 1,
+        max_attempts: int = 3,
+        status_enabled: bool = True,
     ) -> AgentRun:
         messages = _initial_messages(
             report,
             previous_evidence,
             context or empty_context_bundle(),
-        )  # 初始消息
-        turns: list[ModelTurn] = []   # 记录所有轮次
-        calls_used = 0
+        )
+        turns: list[ModelTurn] = []
+        runtime = AgentRuntimeState(attempt, max_attempts, self.max_tool_calls)
+        guard = LoopGuard()
+        completion = CompletionPolicy()
+        guard_events: list[str] = []
+        max_model_turns = self.max_tool_calls + 3
 
-        while calls_used < self.max_tool_calls:
-            turn = self.client.complete(messages, self.registry.schemas())
+        while len(turns) < max_model_turns:
+            status_message = _status_message(runtime) if status_enabled else None
+            if status_message is not None:
+                messages.append(status_message)
+            try:
+                turn = self.client.complete(messages, self.registry.schemas())
+            finally:
+                if status_message is not None:
+                    messages.pop()
+
             turns.append(turn)
             messages.append(_assistant_message(turn))
-            if not turn.tool_calls:  # LLM 不用工具了
-                return AgentRun(completed=True, turns=tuple(turns))
+            if not turn.tool_calls:
+                decision = completion.evaluate(
+                    runtime.snapshot(),
+                    bool(runtime.changed_files),
+                    self.max_tool_calls - runtime.tool_calls_used,
+                )
+                if decision.complete:
+                    return _agent_run(True, turns, runtime, guard_events)
+                if decision.continue_loop:
+                    messages.append(_guidance_message(decision.guidance or "Continue."))
+                    continue
+                return _agent_run(
+                    False,
+                    turns,
+                    runtime,
+                    guard_events,
+                    decision.reason,
+                )
 
-            for call in turn.tool_calls:  # 逐个执行工具
-                if calls_used >= self.max_tool_calls:
-                    return AgentRun(False, tuple(turns), "max_tool_calls_exceeded")
-                calls_used += 1
-                result = self.registry.execute(call.name, call.arguments)  # 执行
-                messages.append(   # 工具结果放回对话
+            guidance: list[str] = []
+            for call in turn.tool_calls:
+                if runtime.tool_calls_used >= self.max_tool_calls:
+                    return _agent_run(
+                        False,
+                        turns,
+                        runtime,
+                        guard_events,
+                        "max_tool_calls_exceeded",
+                    )
+
+                before = guard.before_tool(call.name, call.arguments, runtime)
+                if before.blocked:
+                    return _guarded_run(before, turns, runtime, guard_events)
+                if before.guidance:
+                    guidance.append(before.guidance)
+
+                result = self.registry.execute(call.name, call.arguments)
+                progress = runtime.record_tool(call.name, call.arguments, result)
+                messages.append(
                     {
                         "role": "tool",
                         "tool_call_id": call.id,
@@ -61,12 +109,27 @@ class RepairAgent:
                     }
                 )
 
-        return AgentRun(False, tuple(turns), "max_tool_calls_exceeded")
+                after = guard.after_tool(progress, runtime)
+                if after.blocked:
+                    return _guarded_run(after, turns, runtime, guard_events)
+                if after.guidance:
+                    guidance.append(after.guidance)
+
+            if guidance:
+                messages.append(_guidance_message(" ".join(dict.fromkeys(guidance))))
+
+        return _agent_run(
+            False,
+            turns,
+            runtime,
+            guard_events,
+            "max_model_turns_exceeded",
+        )
 
 
 def _initial_messages(
     report: FailureReport,
-    previous_evidence: tuple[str, ...],
+    previous_evidence: tuple[Any, ...],
     context: ContextBundle,
 ) -> list[dict[str, Any]]:
     payload = {
@@ -120,3 +183,40 @@ def _assistant_message(turn: ModelTurn) -> dict[str, Any]:
             for call in turn.tool_calls
         ],
     }
+
+
+def _status_message(runtime: AgentRuntimeState) -> dict[str, str]:
+    status = json.dumps(asdict(runtime.snapshot()), ensure_ascii=False, sort_keys=True)
+    return {"role": "user", "content": f"<agent_status>{status}</agent_status>"}
+
+
+def _guidance_message(guidance: str) -> dict[str, str]:
+    return {"role": "user", "content": f"<harness_guidance>{guidance}</harness_guidance>"}
+
+
+def _guarded_run(
+    decision: GuardDecision,
+    turns: list[ModelTurn],
+    runtime: AgentRuntimeState,
+    guard_events: list[str],
+) -> AgentRun:
+    reason = decision.reason or "loop_guard_blocked"
+    guard_events.append(reason)
+    return _agent_run(False, turns, runtime, guard_events, reason)
+
+
+def _agent_run(
+    completed: bool,
+    turns: list[ModelTurn],
+    runtime: AgentRuntimeState,
+    guard_events: list[str],
+    failure_reason: str | None = None,
+) -> AgentRun:
+    return AgentRun(
+        completed=completed,
+        turns=tuple(turns),
+        failure_reason=failure_reason,
+        final_status=runtime.snapshot(),
+        guard_events=tuple(guard_events),
+    )
+

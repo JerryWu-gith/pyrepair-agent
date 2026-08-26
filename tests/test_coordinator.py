@@ -81,6 +81,8 @@ def test_coordinator_generates_patch_without_touching_original(tmp_path):
                 "replace_text",
                 {"path": "app.py", "old_text": "return a - b", "new_text": "return a + b"},
             ),
+            model_tool_turn("diff-1", "show_diff", {}),
+            model_tool_turn("target-1", "run_target_test", {}),
             model_text_turn("done"),
         ]
     )
