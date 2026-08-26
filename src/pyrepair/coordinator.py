@@ -1,11 +1,13 @@
 from __future__ import annotations
 
 from collections.abc import Callable
+from dataclasses import asdict
 from pathlib import Path
 from typing import Any
 
 from .context_builder import ContextBuilder
 from .deepseek import DeepSeekError
+from .feedback import AttemptFeedback, FeedbackBuilder
 from .models import (
     AgentRun,
     FailureReport,
@@ -38,6 +40,7 @@ class RepairCoordinator:
         registry_factory: Callable[[WorkspaceSession, str], ToolRegistry],
         agent_factory: Callable[[ToolRegistry], Any],
         context_builder: ContextBuilder,
+        feedback_builder: FeedbackBuilder,
         policy: PatchPolicyGate,
         reviewer_factory: Callable[[], Any],
         verifier: Verifier,
@@ -50,6 +53,7 @@ class RepairCoordinator:
         self.registry_factory = registry_factory
         self.agent_factory = agent_factory
         self.context_builder = context_builder
+        self.feedback_builder = feedback_builder
         self.policy = policy
         self.reviewer_factory = reviewer_factory
         self.verifier = verifier
@@ -142,7 +146,7 @@ class RepairCoordinator:
             )
             baseline_failures = {item.node_id for item in baseline.failures}
             baseline_failures.add(failure_report.node_id)
-            evidence: list[str] = []
+            feedbacks: list[AttemptFeedback] = []
 
             for attempt in range(1, request.max_attempts + 1):
                 self._emit(f"attempt:{attempt}")
@@ -150,8 +154,10 @@ class RepairCoordinator:
                 registry = self.registry_factory(session, failure_report.node_id)  #重置工具
                 agent_run = self.agent_factory(registry).run(
                     failure_report,
-                    tuple(evidence),
+                    tuple(feedbacks),
                     context=context_bundle,
+                    attempt=attempt,
+                    max_attempts=request.max_attempts,
                 )
                 self._record_agent_turns(recorder, attempt, agent_run) # 记录 token 用量
                 snapshot = session.snapshot()     # agent 改完 → 对比 baseline/working 生成补丁
@@ -164,23 +170,55 @@ class RepairCoordinator:
                     "policy_allowed": check.allowed,
                     "policy_violations": list(check.violations),
                 }
+                status = agent_run.final_status
+                attempt_record.update(
+                    {
+                        "tool_calls_used": status.tool_calls_used if status else 0,
+                        "repeated_call_count": status.repeated_call_count if status else 0,
+                        "no_progress_steps": status.no_progress_steps if status else 0,
+                        "guard_events": list(agent_run.guard_events),
+                        "target_test_runs": sum(
+                            call.name == "run_target_test"
+                            for turn in agent_run.turns
+                            for call in turn.tool_calls
+                        ),
+                    }
+                )
 
                 if not snapshot.changes:  # 没生成补丁
-                    evidence.append("no_patch_generated")
                     attempt_record["outcome"] = "no_patch_generated"
+                    self._attach_feedback(
+                        feedbacks,
+                        attempt_record,
+                        attempt,
+                        snapshot,
+                        check,
+                    )
                     attempt_records.append(attempt_record)
                     continue
                 if not agent_run.completed:
                     reason = agent_run.failure_reason or "agent_incomplete"
-                    evidence.append(reason)
                     attempt_record["outcome"] = reason
+                    self._attach_feedback(
+                        feedbacks,
+                        attempt_record,
+                        attempt,
+                        snapshot,
+                        check,
+                    )
                     attempt_records.append(attempt_record)
                     continue
 
                 self._emit("policy")
                 if not check.allowed:
-                    evidence.extend(check.violations)
                     attempt_record["outcome"] = "policy_rejected"
+                    self._attach_feedback(
+                        feedbacks,
+                        attempt_record,
+                        attempt,
+                        snapshot,
+                        check,
+                    )
                     attempt_records.append(attempt_record)
                     continue
 
@@ -197,8 +235,15 @@ class RepairCoordinator:
                 )
                 attempt_record["review"] = _review_data(review)
                 if not review.approved:
-                    evidence.extend(review.findings or (review.reason,))
                     attempt_record["outcome"] = "review_rejected"
+                    self._attach_feedback(
+                        feedbacks,
+                        attempt_record,
+                        attempt,
+                        snapshot,
+                        check,
+                        review=review,
+                    )
                     attempt_records.append(attempt_record)
                     continue
 
@@ -216,6 +261,15 @@ class RepairCoordinator:
                 attempt_record.update(_verification_data(verification))
                 if verification.passed:
                     attempt_record["outcome"] = "success"
+                    self._attach_feedback(
+                        feedbacks,
+                        attempt_record,
+                        attempt,
+                        snapshot,
+                        check,
+                        review=review,
+                        verification=verification,
+                    )
                     attempt_records.append(attempt_record)
                     recorder.write_patch(snapshot)
                     return self._finish(
@@ -228,8 +282,16 @@ class RepairCoordinator:
                     )
 
                 attempt_record["outcome"] = "verification_failed"
+                self._attach_feedback(
+                    feedbacks,
+                    attempt_record,
+                    attempt,
+                    snapshot,
+                    check,
+                    review=review,
+                    verification=verification,
+                )
                 attempt_records.append(attempt_record)
-                evidence.extend(_verification_evidence(verification))
 
             return self._finish(
                 recorder,
@@ -278,6 +340,28 @@ class RepairCoordinator:
                     "stop_reason": turn.stop_reason,
                 }
             )
+
+    def _attach_feedback(
+        self,
+        feedbacks: list[AttemptFeedback],
+        attempt_record: dict[str, Any],
+        attempt: int,
+        snapshot,
+        check,
+        *,
+        review: ReviewResult | None = None,
+        verification: VerificationResult | None = None,
+    ) -> None:
+        feedback = self.feedback_builder.build(
+            attempt=attempt,
+            outcome=str(attempt_record["outcome"]),
+            snapshot=snapshot,
+            patch_check=check,
+            review=review,
+            verification=verification,
+        )
+        feedbacks.append(feedback)
+        attempt_record["feedback"] = asdict(feedback)
 
     def _finish(
         self,

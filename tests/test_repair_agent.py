@@ -3,6 +3,7 @@ import json
 import pytest
 
 from pyrepair.context_builder import ContextBundle, ContextSnippet
+from pyrepair.feedback import AttemptFeedback
 from pyrepair.models import FailureReport, ModelTurn, ToolCallRequest
 from pyrepair.repair_agent import RepairAgent
 from pyrepair.testing import TestRunner as PytestRunner
@@ -150,22 +151,34 @@ def test_agent_can_end_without_tool_call(registry):
     assert result.failure_reason is None
 
 
-def test_agent_includes_previous_attempt_evidence_in_initial_request(registry):
+def test_agent_includes_structured_previous_attempts_in_initial_request(registry):
     llm = FakeLLM([model_text_turn("stop")])
+    feedback = AttemptFeedback(
+        1,
+        "policy_rejected",
+        ("app.py",),
+        "diff --git a/app.py b/app.py",
+        ("protected_path",),
+        (),
+        None,
+        (),
+        "Avoid the policy violation.",
+    )
 
     RepairAgent(llm, registry, max_tool_calls=3).run(
         failure_report(),
-        previous_evidence=("protected_path:tests/test_app.py", "target test still fails"),
+        previous_feedback=(feedback,),
     )
 
     initial_messages = llm.requests[0][0]
     assert initial_messages[0]["role"] == "system"
     assert "禁止修改测试" in initial_messages[0]["content"]
     user_payload = json.loads(initial_messages[1]["content"])
-    assert user_payload["previous_evidence"] == [
-        "protected_path:tests/test_app.py",
-        "target test still fails",
+    assert user_payload["previous_attempts"][0]["outcome"] == "policy_rejected"
+    assert user_payload["previous_attempts"][0]["policy_violations"] == [
+        "protected_path"
     ]
+    assert user_payload["previous_attempts"][0]["trusted"] is False
 
 
 def test_agent_initial_payload_contains_untrusted_context(registry):

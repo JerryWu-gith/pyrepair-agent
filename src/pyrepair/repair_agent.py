@@ -7,6 +7,7 @@ from typing import Any
 from .agent_state import AgentRuntimeState
 from .context_builder import ContextBundle, empty_context_bundle
 from .deepseek import ModelClient
+from .feedback import AttemptFeedback
 from .loop_guard import CompletionPolicy, GuardDecision, LoopGuard
 from .models import AgentRun, FailureReport, ModelTurn
 from .tools import ToolRegistry
@@ -32,7 +33,7 @@ class RepairAgent:
     def run(
         self,
         report: FailureReport,
-        previous_evidence: tuple[Any, ...] = (),
+        previous_feedback: tuple[AttemptFeedback, ...] = (),
         *,
         context: ContextBundle | None = None,
         attempt: int = 1,
@@ -41,7 +42,7 @@ class RepairAgent:
     ) -> AgentRun:
         messages = _initial_messages(
             report,
-            previous_evidence,
+            previous_feedback,
             context or empty_context_bundle(),
         )
         turns: list[ModelTurn] = []
@@ -129,7 +130,7 @@ class RepairAgent:
 
 def _initial_messages(
     report: FailureReport,
-    previous_evidence: tuple[Any, ...],
+    previous_feedback: tuple[AttemptFeedback, ...],
     context: ContextBundle,
 ) -> list[dict[str, Any]]:
     payload = {
@@ -158,7 +159,24 @@ def _initial_messages(
             "related_files": list(context.related_files),
             "truncated": context.truncated,
         },
-        "previous_evidence": list(previous_evidence),
+        "previous_attempts": [
+            {
+                "attempt": item.attempt,
+                "outcome": item.outcome,
+                "changed_files": list(item.changed_files),
+                "candidate_diff": item.candidate_diff,
+                "policy_violations": list(item.policy_violations),
+                "review_findings": list(item.review_findings),
+                "target_failure": (
+                    asdict(item.target_failure) if item.target_failure is not None else None
+                ),
+                "regression_failures": list(item.regression_failures),
+                "next_focus": item.next_focus,
+                "truncated": item.truncated,
+                "trusted": False,
+            }
+            for item in previous_feedback
+        ],
     }
     return [
         {"role": "system", "content": SYSTEM_PROMPT},
@@ -219,4 +237,3 @@ def _agent_run(
         final_status=runtime.snapshot(),
         guard_events=tuple(guard_events),
     )
-

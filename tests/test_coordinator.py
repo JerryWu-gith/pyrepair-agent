@@ -6,6 +6,7 @@ import pytest
 from pyrepair.context_builder import ContextBuilder
 from pyrepair.coordinator import CoordinatorError, RepairCoordinator
 from pyrepair.deepseek import DeepSeekError
+from pyrepair.feedback import FeedbackBuilder
 from pyrepair.models import AgentRun, ModelTurn, PytestFailure, RepairRequest, ReviewResult
 from pyrepair.models import TestRun as PytestRun
 from pyrepair.policy import PatchPolicyGate
@@ -63,6 +64,7 @@ def build_coordinator(
         ),
         agent_factory=agent_factory,
         context_builder=ContextBuilder(),
+        feedback_builder=FeedbackBuilder(),
         policy=policy,
         reviewer_factory=reviewer_factory,
         verifier=Verifier(selected_runner, policy),
@@ -256,8 +258,16 @@ def test_coordinator_records_incomplete_agent_after_patch(tmp_path):
         def __init__(self, registry):
             self.registry = registry
 
-        def run(self, report, previous_evidence=(), *, context=None):
-            del report, previous_evidence, context
+        def run(
+            self,
+            report,
+            previous_feedback=(),
+            *,
+            context=None,
+            attempt=1,
+            max_attempts=3,
+        ):
+            del report, previous_feedback, context, attempt, max_attempts
             path = self.registry.workspace / "app.py"
             path.write_text(
                 path.read_text(encoding="utf-8").replace("return a - b", "return a + b"),
@@ -302,8 +312,16 @@ def test_coordinator_records_deepseek_error(tmp_path):
         def __init__(self, registry):
             self.registry = registry
 
-        def run(self, report, previous_evidence=(), *, context=None):
-            del report, previous_evidence, context
+        def run(
+            self,
+            report,
+            previous_feedback=(),
+            *,
+            context=None,
+            attempt=1,
+            max_attempts=3,
+        ):
+            del report, previous_feedback, context, attempt, max_attempts
             raise DeepSeekError("service unavailable")
 
     coordinator = build_coordinator(
@@ -350,8 +368,16 @@ class DirectWriteAgent:
         self.registry = registry
         self.writer = writer
 
-    def run(self, report, previous_evidence=(), *, context=None):
-        del report, previous_evidence, context
+    def run(
+        self,
+        report,
+        previous_feedback=(),
+        *,
+        context=None,
+        attempt=1,
+        max_attempts=3,
+    ):
+        del report, previous_feedback, context, attempt, max_attempts
         self.writer(self.registry.workspace)
         return AgentRun(True, ())
 
@@ -476,6 +502,53 @@ def test_coordinator_detects_new_full_suite_regression(tmp_path):
     assert report["attempts"][0]["regression_failures"] == [
         "tests/test_app.py::test_multiply"
     ]
+
+
+def test_coordinator_feeds_failed_patch_evidence_to_clean_second_attempt(tmp_path):
+    repo = make_buggy_repo(tmp_path)
+    agent_llm = FakeLLM(
+        [
+            model_tool_turn(
+                "edit-1",
+                "replace_text",
+                {
+                    "path": "app.py",
+                    "old_text": "return a - b",
+                    "new_text": "return a * b",
+                },
+            ),
+            model_tool_turn("diff-1", "show_diff", {}),
+            model_tool_turn("test-1", "run_target_test", {}),
+            model_text_turn("first attempt done"),
+            model_tool_turn("read-2", "read_file", {"path": "app.py"}),
+            model_text_turn("second attempt stopped"),
+        ]
+    )
+    coordinator = build_coordinator(
+        repo,
+        lambda registry: RepairAgent(agent_llm, registry),
+        lambda: ReviewAgent(FakeLLM([approval_turn()])),
+    )
+
+    result = coordinator.run(RepairRequest(repo=repo, max_attempts=2))
+
+    second_attempt_payload = json.loads(agent_llm.requests[4][0][1]["content"])
+    previous = second_attempt_payload["previous_attempts"][0]
+    assert previous["outcome"] == "verification_failed"
+    assert "app.py" in previous["candidate_diff"]
+    assert previous["policy_violations"] == []
+    assert previous["review_findings"] == []
+    assert previous["target_failure"]["summary"]
+    assert previous["trusted"] is False
+
+    second_request_tool = next(
+        item
+        for item in agent_llm.requests[5][0]
+        if item.get("tool_call_id") == "read-2"
+    )
+    second_read = json.loads(second_request_tool["content"])
+    assert "return a - b" in second_read["data"]["content"]
+    assert result.metadata["attempts"][0]["feedback"]["outcome"] == "verification_failed"
 
 
 class TimeoutRunner:

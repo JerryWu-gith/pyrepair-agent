@@ -7,6 +7,7 @@ from .config import AppConfig, ConfigError, load_config
 from .context_builder import ContextBuilder
 from .coordinator import CoordinatorError, RepairCoordinator
 from .deepseek import DeepSeekClient
+from .feedback import FeedbackBuilder
 from .models import RepairRequest
 from .policy import PatchPolicyGate
 from .pytest_parser import PytestParser
@@ -106,6 +107,7 @@ def build_coordinator(config: AppConfig, model_enabled: bool) -> RepairCoordinat
         registry_factory=lambda session, node_id: ToolRegistry(session, runner, node_id),
         agent_factory=agent_factory,
         context_builder=ContextBuilder(),
+        feedback_builder=FeedbackBuilder(),
         policy=policy,
         reviewer_factory=reviewer_factory,
         verifier=Verifier(runner, policy),
