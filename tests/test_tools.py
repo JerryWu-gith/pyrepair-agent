@@ -82,6 +82,36 @@ def test_read_file_limits_large_content(tool_registry):
     assert result.data["truncated"] is True
 
 
+def test_read_file_can_resume_inside_a_long_line(tool_registry):
+    (tool_registry.workspace / "large.py").write_text("x" * 20_100, encoding="utf-8")
+
+    first = tool_registry.execute("read_file", {"path": "large.py"})
+    second = tool_registry.execute(
+        "read_file",
+        {
+            "path": "large.py",
+            "start_line": first.data["next_start_line"],
+            "start_column": first.data["next_start_column"],
+        },
+    )
+
+    assert first.data["next_start_line"] == 1
+    assert first.data["next_start_column"] > 0
+    assert second.ok is True
+    assert second.data["truncated"] is False
+    assert "x" in second.data["content"]
+
+
+def test_read_file_rejects_start_line_beyond_end_of_file(tool_registry):
+    result = tool_registry.execute(
+        "read_file",
+        {"path": "app.py", "start_line": 99},
+    )
+
+    assert result.error is not None
+    assert result.error.code == "line_out_of_range"
+
+
 def test_read_file_returns_structured_missing_file_error(tool_registry):
     result = tool_registry.execute("read_file", {"path": "missing.py"})
 

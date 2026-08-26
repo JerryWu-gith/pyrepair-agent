@@ -85,6 +85,7 @@ class ReadFileTool(BaseTool):
         "properties": {
             "path": {"type": "string", "description": "Workspace-relative path"},
             "start_line": {"type": "integer", "minimum": 1},
+            "start_column": {"type": "integer", "minimum": 0},
             "end_line": {"type": "integer", "minimum": 1},
         },
         "required": ["path"],
@@ -95,16 +96,24 @@ class ReadFileTool(BaseTool):
         self.root = root
 
     def execute(self, arguments: dict[str, Any]) -> ToolResult:
-        if not _valid_keys(arguments, {"path"}, {"start_line", "end_line"}):
+        if not _valid_keys(
+            arguments,
+            {"path"},
+            {"start_line", "start_column", "end_line"},
+        ):
             return _invalid_arguments()
         path_value = arguments.get("path")
         start = arguments.get("start_line", 1)
+        start_column = arguments.get("start_column", 0)
         end_value = arguments.get("end_line")
         if (
             not isinstance(path_value, str)
             or not isinstance(start, int)
             or isinstance(start, bool)
             or start < 1
+            or not isinstance(start_column, int)
+            or isinstance(start_column, bool)
+            or start_column < 0
             or (end_value is not None and (
                 not isinstance(end_value, int)
                 or isinstance(end_value, bool)
@@ -126,29 +135,38 @@ class ReadFileTool(BaseTool):
             return tool_error("unsupported_text_file", "File is not valid UTF-8 text.")
 
         total = len(lines)
+        if start > total:
+            return tool_error("line_out_of_range", "Start line is beyond end of file.")
+        if start_column > len(lines[start - 1]):
+            return tool_error("column_out_of_range", "Start column is beyond end of line.")
         requested_end = end_value if end_value is not None else start + MAX_READ_LINES - 1
         actual_end = min(requested_end, total)
-        selected = lines[start - 1 : actual_end] if start <= total else []
-        numbered = "\n".join(
-            f"{line_number}: {line}"
-            for line_number, line in enumerate(selected, start=start)
+        numbered, char_cursor = _numbered_page(
+            lines,
+            start,
+            actual_end,
+            start_column,
         )
-        char_truncated = len(numbered) > MAX_READ_CHARS
-        if char_truncated:
-            marker = "\n[TRUNCATED]"
-            numbered = numbered[: MAX_READ_CHARS - len(marker)] + marker
-        more_lines = actual_end < total
+        more_lines = char_cursor is None and actual_end < total
+        next_start_line = (
+            char_cursor[0]
+            if char_cursor is not None
+            else actual_end + 1 if more_lines else None
+        )
+        data: dict[str, JSONValue] = {
+            "path": path.relative_to(self.root).as_posix(),
+            "start_line": start,
+            "end_line": actual_end,
+            "total_lines": total,
+            "content": numbered,
+            "truncated": more_lines or char_cursor is not None,
+            "next_start_line": next_start_line,
+        }
+        if char_cursor is not None:
+            data["next_start_column"] = char_cursor[1]
         return ToolResult(
             True,
-            {
-                "path": path.relative_to(self.root).as_posix(),
-                "start_line": start,
-                "end_line": actual_end,
-                "total_lines": total,
-                "content": numbered,
-                "truncated": more_lines or char_truncated,
-                "next_start_line": actual_end + 1 if more_lines else None,
-            },
+            data,
         )
 
 
@@ -498,7 +516,42 @@ class ToolRegistry:
             return tool_error("unknown_tool", "Requested tool is not available.")
         if not isinstance(arguments, dict):
             return _invalid_arguments()
-        return tool.execute(arguments)
+        result = tool.execute(arguments)
+        return ToolResult(
+            result.ok,
+            result.data,
+            result.error,
+            {**result.metadata, "trusted": False},
+        )
+
+
+def _numbered_page(
+    lines: list[str],
+    start_line: int,
+    end_line: int,
+    start_column: int,
+) -> tuple[str, tuple[int, int] | None]:
+    chunks: list[str] = []
+    used = 0
+    marker = "\n[TRUNCATED]"
+    for line_number in range(start_line, end_line + 1):
+        column = start_column if line_number == start_line else 0
+        prefix = f"{line_number}: "
+        separator = "\n" if chunks else ""
+        text = lines[line_number - 1][column:]
+        full = separator + prefix + text
+        if used + len(full) <= MAX_READ_CHARS:
+            chunks.append(full)
+            used += len(full)
+            continue
+
+        available = MAX_READ_CHARS - used - len(separator) - len(prefix) - len(marker)
+        consumed = max(0, available)
+        fragment = separator + prefix + text[:consumed]
+        if len(fragment) + used + len(marker) <= MAX_READ_CHARS:
+            chunks.append(fragment + marker)
+        return "".join(chunks), (line_number, column + consumed)
+    return "".join(chunks), None
 
 
 def resolve_inside(root: Path, user_path: str) -> Path:

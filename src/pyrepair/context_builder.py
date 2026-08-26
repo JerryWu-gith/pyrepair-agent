@@ -203,7 +203,8 @@ def _candidate_snippet(root: Path, candidate: _Candidate) -> tuple[ContextSnippe
     if source is None:
         return None, False
     lines = source.splitlines()
-    symbol = candidate.symbol or _symbol_at_line(candidate.module, candidate.trace_line)
+    trace_symbol = _symbol_at_line(candidate.module, candidate.trace_line)
+    symbol = trace_symbol or candidate.symbol
     if symbol is not None:
         start_line = symbol.start_line
         end_line = min(symbol.end_line, len(lines))
@@ -214,6 +215,17 @@ def _candidate_snippet(root: Path, candidate: _Candidate) -> tuple[ContextSnippe
         start_line = 1
         end_line = len(lines)
 
+    original_range = (start_line, end_line)
+    center_line = candidate.trace_line
+    if center_line is not None and not start_line <= center_line <= end_line:
+        center_line = None
+    start_line, end_line = _bounded_line_range(
+        candidate.module.path,
+        lines,
+        start_line,
+        end_line,
+        center_line,
+    )
     raw = "\n".join(lines[start_line - 1 : end_line])
     content, content_truncated = _wrap_untrusted(candidate.module.path, raw)
     return (
@@ -226,14 +238,55 @@ def _candidate_snippet(root: Path, candidate: _Candidate) -> tuple[ContextSnippe
             score=candidate.score,
             content=content,
         ),
-        content_truncated,
+        content_truncated or (start_line, end_line) != original_range,
     )
+
+
+def _bounded_line_range(
+    path: str,
+    lines: list[str],
+    start_line: int,
+    end_line: int,
+    center_line: int | None,
+) -> tuple[int, int]:
+    raw = "\n".join(lines[start_line - 1 : end_line])
+    if not _wrap_untrusted(path, raw)[1]:
+        return start_line, end_line
+
+    if center_line is None:
+        selected_start = selected_end = start_line
+    else:
+        selected_start = selected_end = center_line
+
+    while True:
+        choices: list[tuple[int, int]] = []
+        if selected_start > start_line and selected_end < end_line:
+            choices.append((selected_start - 1, selected_end + 1))
+        if selected_end < end_line:
+            choices.append((selected_start, selected_end + 1))
+        if selected_start > start_line:
+            choices.append((selected_start - 1, selected_end))
+
+        expanded = next(
+            (
+                choice
+                for choice in choices
+                if not _wrap_untrusted(
+                    path,
+                    "\n".join(lines[choice[0] - 1 : choice[1]]),
+                )[1]
+            ),
+            None,
+        )
+        if expanded is None:
+            return selected_start, selected_end
+        selected_start, selected_end = expanded
 
 
 def _wrap_untrusted(path: str, raw: str) -> tuple[str, bool]:
     header = f'<repository_data path="{escape(path, quote=True)}" trusted="false">\n'
     footer = "\n</repository_data>"
-    safe_raw = raw.replace("</repository_data>", "<\\/repository_data>")
+    safe_raw = escape(raw, quote=False)
     available = MAX_SNIPPET_CHARS - len(header) - len(footer)
     marker = "\n[TRUNCATED]"
     truncated = len(safe_raw) > available

@@ -110,3 +110,21 @@ class Client:
         ("Client", "class"),
         ("Client.send", "method"),
     ]
+
+
+def test_import_neighbors_resolve_relative_imports_and_submodules(tmp_path):
+    write(tmp_path / "pkg/__init__.py", "from . import helper")
+    write(tmp_path / "pkg/helper.py", "VALUE = 1")
+    write(tmp_path / "pkg/service.py", "from .helper import VALUE")
+    write(tmp_path / "pkg/entry.py", "from . import service")
+    write(tmp_path / "consumer.py", "from pkg import helper")
+
+    index = build_repository_index(tmp_path)
+
+    assert [item.path for item in index.import_neighbors("pkg/service.py")] == [
+        "pkg/entry.py",
+        "pkg/helper.py",
+    ]
+    assert "consumer.py" in {
+        item.path for item in index.import_neighbors("pkg/helper.py")
+    }

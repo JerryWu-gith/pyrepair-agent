@@ -1,11 +1,14 @@
 from __future__ import annotations
 
 import json
+import re
 from dataclasses import asdict, dataclass
 from typing import Any
 
 from .models import AgentStatus
 from .tools import ToolResult
+
+_PYTEST_DURATION = re.compile(r"\b\d+(?:\.\d+)?s\b")
 
 
 @dataclass(frozen=True)
@@ -54,7 +57,7 @@ class AgentRuntimeState:
         result: ToolResult,
     ) -> ToolProgress:
         call_key = call_fingerprint(name, arguments)
-        result_key = canonical_json(asdict(result))
+        result_key = canonical_json(_stable_result(name, result))
         pair = (call_key, result_key)
         progressed = pair not in self._seen_results
         self._seen_results.add(pair)
@@ -125,3 +128,17 @@ class AgentRuntimeState:
         elif name == "run_target_test":
             self.target_test_run = True
 
+
+def _stable_result(name: str, result: ToolResult) -> dict[str, object]:
+    payload = asdict(result)
+    if name != "run_target_test":
+        return payload
+
+    data = dict(result.data)
+    data.pop("duration_ms", None)
+    for key in ("stdout_tail", "stderr_tail"):
+        value = data.get(key)
+        if isinstance(value, str):
+            data[key] = _PYTEST_DURATION.sub("<duration>", value)
+    payload["data"] = data
+    return payload

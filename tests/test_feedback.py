@@ -84,3 +84,32 @@ def test_feedback_maps_policy_and_loop_outcomes_to_specific_next_focus():
 
     assert "policy" in policy.next_focus.lower()
     assert "strategy" in loop.next_focus.lower()
+
+
+def test_feedback_reports_regressions_when_target_test_passed():
+    target_run = PytestRun(
+        ("python", "-m", "pytest"),
+        0,
+        "1 passed",
+        "",
+        100,
+    )
+    patch_check = PatchCheck(True, (), ("src/app.py",), 1, 1)
+    verification = VerificationResult(
+        True,
+        False,
+        ("tests/test_other.py::test_regression",),
+        patch_check,
+        target_run=target_run,
+    )
+
+    feedback = FeedbackBuilder().build(
+        attempt=2,
+        outcome="verification_failed",
+        snapshot=long_snapshot(),
+        patch_check=patch_check,
+        verification=verification,
+    )
+
+    assert feedback.target_failure is None
+    assert "regression" in feedback.next_focus.lower()

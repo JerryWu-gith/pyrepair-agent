@@ -85,4 +85,3 @@ class CompletionPolicy:
                 guidance="Required before finishing: " + ", ".join(missing),
             )
         return CompletionDecision(False, False, "required_verification_missing")
-

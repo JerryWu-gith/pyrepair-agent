@@ -71,3 +71,32 @@ def test_identical_error_count_is_tracked_per_call():
     assert state.identical_error_count(call_fingerprint("read_file", arguments)) == 2
     assert state.snapshot().last_error == "file_not_found"
 
+
+def test_test_duration_and_pytest_timing_do_not_count_as_progress():
+    state = AgentRuntimeState(1, 3, 8)
+    arguments: dict = {}
+    first = ok_result(
+        {
+            "target": "tests/test_app.py::test_add",
+            "passed": False,
+            "exit_code": 1,
+            "stdout_tail": "1 failed in 0.11s",
+            "stderr_tail": "",
+            "duration_ms": 110,
+            "timed_out": False,
+        }
+    )
+    second = ok_result(
+        {
+            **first.data,
+            "stdout_tail": "1 failed in 0.99s",
+            "duration_ms": 990,
+        }
+    )
+
+    initial = state.record_tool("run_target_test", arguments, first)
+    repeated = state.record_tool("run_target_test", arguments, second)
+
+    assert initial.progressed is True
+    assert repeated.progressed is False
+    assert state.snapshot().no_progress_steps == 1

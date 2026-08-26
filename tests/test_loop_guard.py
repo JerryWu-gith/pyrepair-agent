@@ -118,4 +118,3 @@ def test_completion_fails_when_verification_is_missing_and_budget_exhausted():
     assert decision.complete is False
     assert decision.continue_loop is False
     assert decision.reason == "required_verification_missing"
-

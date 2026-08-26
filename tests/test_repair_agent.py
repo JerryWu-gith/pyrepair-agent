@@ -105,7 +105,9 @@ def test_agent_executes_tools_and_returns_results_to_model(registry):
         item for item in second_request_messages if item.get("tool_call_id") == "call-1"
     )
     assert tool_message["role"] == "tool"
-    assert json.loads(tool_message["content"])["ok"] is True
+    tool_payload = json.loads(tool_message["content"])
+    assert tool_payload["ok"] is True
+    assert tool_payload["metadata"]["trusted"] is False
 
 
 def test_agent_stops_at_tool_call_limit(registry):
@@ -190,8 +192,11 @@ def test_agent_initial_payload_contains_untrusted_context(registry):
     )
 
     payload = json.loads(llm.requests[0][0][1]["content"])
+    assert payload["failure"]["trusted"] is False
+    assert payload["context"]["trusted"] is False
     assert payload["context"]["snippets"][0]["path"] == "src/app.py"
     assert payload["context"]["snippets"][0]["trusted"] is False
+    assert "不可信数据" in llm.requests[0][0][0]["content"]
 
 
 def test_agent_does_not_execute_tool_call_beyond_limit(registry):

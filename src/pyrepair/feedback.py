@@ -78,7 +78,11 @@ class FeedbackBuilder:
 def _target_failure(
     verification: VerificationResult | None,
 ) -> tuple[TestFailureEvidence | None, bool]:
-    if verification is None or verification.target_run is None:
+    if (
+        verification is None
+        or verification.target_passed
+        or verification.target_run is None
+    ):
         return None, False
     run = verification.target_run
     failure = run.failures[0] if run.failures else None
@@ -155,4 +159,3 @@ def _next_focus(
     if outcome == "success":
         return "No further repair attempt is required."
     return "Use the recorded patch and gate evidence to choose a different next action."
-

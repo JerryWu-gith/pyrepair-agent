@@ -74,9 +74,10 @@ class RepositoryIndex:  # 保存整个仓库所有 Python 文件的索引
 
         # 正向关系：当前文件 import 了哪些项目文件
         for imported in current.imports:
-            neighbor = modules_by_name.get(imported.module)
-            if neighbor is not None:
-                neighbor_paths.add(neighbor.path)
+            for target in _import_targets(current, imported):
+                neighbor = modules_by_name.get(target)
+                if neighbor is not None and neighbor.path != current.path:
+                    neighbor_paths.add(neighbor.path)
 
         # 反向关系：哪些项目文件 import 了当前文件
         for module in self.modules:
@@ -84,7 +85,9 @@ class RepositoryIndex:  # 保存整个仓库所有 Python 文件的索引
                 continue
 
             imported_names = {
-                imported.module for imported in module.imports
+                target
+                for imported in module.imports
+                for target in _import_targets(module, imported)
             }
             if current.module in imported_names:
                 neighbor_paths.add(module.path)
@@ -92,6 +95,33 @@ class RepositoryIndex:  # 保存整个仓库所有 Python 文件的索引
         return tuple(
             module for module in self.modules if module.path in neighbor_paths
         )
+
+
+def _import_targets(importer: ModuleInfo, imported: ImportInfo) -> set[str]:
+    raw_module = imported.module
+    if raw_module.startswith("."):
+        level = len(raw_module) - len(raw_module.lstrip("."))
+        suffix = raw_module[level:]
+        if importer.path.endswith("/__init__.py"):
+            package_parts = importer.module.split(".") if importer.module else []
+        else:
+            package_parts = importer.module.split(".")[:-1]
+        keep = len(package_parts) - (level - 1)
+        if keep < 0:
+            return set()
+        base_parts = package_parts[:keep]
+        if suffix:
+            base_parts.extend(suffix.split("."))
+        base = ".".join(base_parts)
+    else:
+        base = raw_module
+
+    targets = {base} if base else set()
+    for name in imported.names:
+        if name == "*":
+            continue
+        targets.add(f"{base}.{name}" if base else name)
+    return targets
 
 def _module_name(path:Path) -> str:  # 把文件路径转换成模块名
     without_suffix = path.with_suffix("")
@@ -246,5 +276,3 @@ def build_repository_index(root: Path) -> RepositoryIndex:  # 扫描整个仓库
         root=resolved_root,
         modules=tuple(modules),
     )
-
-    
