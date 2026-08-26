@@ -16,7 +16,7 @@ pytest 失败
   → 输出候选 patch、报告、trace 和 pytest 日志
 ```
 
-一次修复最多进行 3 次 attempt；每次 attempt 都从同一 baseline 恢复，不叠加上一轮未经验证的改动。失败证据会被压缩成结构化反馈，交给下一轮重新制定策略。
+一次修复最多进行 3 次 attempt；每次 attempt 都从同一 baseline 恢复，不叠加上一轮未经验证的改动。生成候选 Diff 后，只有通过 Policy 才进入 Review，通过 Review 才进入目标测试，目标测试通过后才运行全量回归。任一阶段失败都会被压缩成结构化反馈，交给下一轮重新制定策略。
 
 ## 为什么不是“再做一个 Claude Code”
 
@@ -56,16 +56,20 @@ flowchart LR
     D --> F[Agent State + Loop Guard]
     D --> G[候选 Diff]
     G --> H[Policy Gate]
-    H --> I[独立 Review]
-    I --> J[目标测试 + 全量回归]
-    J -->|失败证据| K[结构化重试反馈]
+    H -->|通过| I[独立 Review]
+    H -->|拒绝| K[结构化重试反馈]
+    I -->|通过| T[目标测试]
+    I -->|拒绝| K
+    T -->|通过| J[全量回归 + Policy 复查]
+    T -->|失败| K
+    J -->|失败证据| K
     K --> D
     J -->|全部通过| L[patch / report / trace / pytest log]
 ```
 
 这里有两个嵌套循环：
 
-1. **外层 attempt loop**：最多 3 次，每轮恢复干净 working 副本，再经历 Policy、Review 和 Verify。
+1. **外层 attempt loop**：最多 3 次，每轮恢复干净 working 副本；无补丁、Agent 未完成或任一门禁失败都会短路当前轮。
 2. **内层 model-tool loop**：默认最多执行 8 次工具调用；运行时状态会阻止重复调用、重复错误、连续无进展，以及修改后没有查看 Diff 或运行目标测试就提前结束。
 
 更完整的组件与数据流见 [架构说明](docs/architecture.md)。
@@ -111,7 +115,7 @@ pyrepair fix --repo D:\path\to\project --dry-run
 
 PyRepair 的默认原则是“生成候选补丁，不替开发者做最终写入决定”：
 
-- 不直接修改原仓库，只操作系统临时目录中的 baseline/working 副本。
+- Agent 工具不修改原仓库中的源码和配置，只操作系统临时目录中的 baseline/working 副本；Coordinator 会在原仓库的 `.pyrepair/runs/` 下写入审计产物。
 - 不自动应用候选补丁，不自动 Commit，不自动 Push，也不自动创建 PR。
 - Agent 不能执行任意 Shell，只能调用注册表中的 8 个工具。
 - `replace_text` 只允许对单个、唯一匹配的 Python 源码片段做精确替换。
@@ -136,16 +140,16 @@ python benchmarks/run_benchmark.py --model deepseek-v4-flash
 | 用例数 | 15 |
 | 端到端成功 | 15 |
 | 端到端成功率 | 100.0% |
-| 首轮成功率 | 100.0% |
+| 首轮成功率 | 100.0%（15/15） |
 | 平均尝试次数 | 1.00 |
-| 平均耗时 | 16.39 秒 |
+| 平均耗时 | 17.09 秒 |
 | 新增回归 | 0 |
 | Policy 拒绝 | 0 |
 
 这是 PyRepair 整条修复链路的端到端成功率，不是单独的模型准确率。每个成功用例都必须完成失败捕获、模型修复、Policy、Review、目标测试和全量回归；模型输出具有非确定性，单次结果不代表未来运行或真实大型仓库的固定成功率。
 
 - 详细报告：[docs/benchmark-results.md](docs/benchmark-results.md)
-- 本次原始证据：[benchmarks/results/20260826T133842Z-deepseek-v4-flash.jsonl](benchmarks/results/20260826T133842Z-deepseek-v4-flash.jsonl)
+- 本次原始证据：[benchmarks/results/20260826T140319Z-deepseek-v4-flash.jsonl](benchmarks/results/20260826T140319Z-deepseek-v4-flash.jsonl)
 - `deepseek-v4-pro`：尚未评测
 
 ## 测试与复现

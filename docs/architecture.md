@@ -18,11 +18,15 @@ flowchart TD
     REPAIR <--> STATE["AgentRuntimeState + LoopGuard"]
     REPAIR --> SNAP["PatchSnapshot"]
     SNAP --> POLICY["PatchPolicyGate"]
-    POLICY --> REVIEW["只读 ReviewAgent"]
-    REVIEW --> VERIFY["目标测试 + 全量回归"]
-    VERIFY -->|失败| FEEDBACK["FeedbackBuilder"]
+    POLICY -->|通过| REVIEW["只读 ReviewAgent"]
+    POLICY -->|拒绝| FEEDBACK["FeedbackBuilder"]
+    REVIEW -->|通过| TARGET["目标测试"]
+    REVIEW -->|拒绝| FEEDBACK
+    TARGET -->|通过| FULL["全量回归 + Policy 复查"]
+    TARGET -->|失败| FEEDBACK
+    FULL -->|失败| FEEDBACK
     FEEDBACK --> REPAIR
-    VERIFY -->|通过| ARTIFACTS["patch / report / trace / pytest log"]
+    FULL -->|通过| ARTIFACTS["patch / report / trace / pytest log"]
 ```
 
 系统包含两个循环：
@@ -140,12 +144,13 @@ flowchart TD
 
 1. 从 baseline 恢复 working。
 2. 重建 `ToolRegistry` 和 AST 索引。
-3. 执行 RepairAgent。
+3. 执行 RepairAgent；没有补丁或 Agent 未完成时短路当前轮。
 4. 从磁盘生成 `PatchSnapshot`。
-5. 执行 Policy 预检。
-6. 执行独立只读 Review。
-7. 执行目标测试和全量回归。
-8. 成功则写入候选补丁；失败则生成 `AttemptFeedback`。
+5. 执行 Policy 预检；拒绝时短路当前轮。
+6. Policy 通过后执行独立只读 Review；拒绝时短路当前轮。
+7. Review 通过后执行目标测试；目标失败时不运行全量测试。
+8. 目标通过后执行全量回归和 Policy 复查。
+9. 全部门禁通过则写入候选补丁，否则生成 `AttemptFeedback`。
 
 `AttemptFeedback` 包含候选 Diff、Policy 违规、Review findings、目标测试失败、回归失败和下一步聚焦建议。Diff、测试输出和 findings 都有长度上限，下一轮收到的数据继续标记为不可信。
 
@@ -191,7 +196,7 @@ AND final patch_check.allowed
 
 ## 信任边界
 
-- 原仓库只作为复制源；Agent 工具只收到 working 路径。
+- 原仓库的源码和配置只作为复制源，Agent 工具只收到 working 路径；Coordinator 仍会把审计产物写到原仓库的 `.pyrepair/runs/`。
 - baseline 是逻辑不可修改的比较基准，但不是通过操作系统权限设为只读。
 - LLM 自述不决定成功；Coordinator 总是检查磁盘快照和真实测试结果。
 - Review 是额外的概率性语义门禁，不能替代确定性 Policy 和 pytest。
