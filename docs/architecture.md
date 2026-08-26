@@ -144,8 +144,8 @@ flowchart TD
 
 1. 从 baseline 恢复 working。
 2. 重建 `ToolRegistry` 和 AST 索引。
-3. 执行 RepairAgent；没有补丁或 Agent 未完成时短路当前轮。
-4. 从磁盘生成 `PatchSnapshot`。
+3. 执行 RepairAgent。
+4. 从磁盘生成 `PatchSnapshot`；没有补丁或 Agent 未完成时短路当前轮。
 5. 执行 Policy 预检；拒绝时短路当前轮。
 6. Policy 通过后执行独立只读 Review；拒绝时短路当前轮。
 7. Review 通过后执行目标测试；目标失败时不运行全量测试。
