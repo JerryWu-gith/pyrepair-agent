@@ -1,10 +1,12 @@
 from __future__ import annotations
 
+import ast
 import json
 from dataclasses import asdict, dataclass, field
 from pathlib import Path
 from typing import Any, ClassVar, TypeAlias
 
+from .repository_index import RepositoryIndex, build_repository_index
 from .testing import TestRunner
 from .workspace import EXCLUDED_NAMES, WorkspaceError, WorkspaceSession
 
@@ -228,6 +230,118 @@ class SearchCodeTool(BaseTool):
         )
 
 
+class FindSymbolTool(BaseTool):
+    name = "find_symbol"
+    description = "Find indexed Python function, class, or method definitions by name."
+    parameters: ClassVar[dict[str, Any]] = {
+        "type": "object",
+        "properties": {"name": {"type": "string", "description": "Symbol name"}},
+        "required": ["name"],
+        "additionalProperties": False,
+    }
+
+    def __init__(self, index: RepositoryIndex) -> None:
+        self.index = index
+
+    def execute(self, arguments: dict[str, Any]) -> ToolResult:
+        name = _single_string(arguments, "name")
+        if name is None:
+            return _invalid_arguments()
+        definitions = [asdict(item) for item in self.index.symbols_named(name)]
+        return ToolResult(True, {"name": name, "definitions": definitions})
+
+
+class FindReferencesTool(BaseTool):
+    name = "find_references"
+    description = (
+        "Find possible AST references to a name; results are not LSP semantic guarantees."
+    )
+    parameters: ClassVar[dict[str, Any]] = {
+        "type": "object",
+        "properties": {"name": {"type": "string", "description": "Name to locate"}},
+        "required": ["name"],
+        "additionalProperties": False,
+    }
+
+    def __init__(self, root: Path, index: RepositoryIndex) -> None:
+        self.root = root
+        self.index = index
+
+    def execute(self, arguments: dict[str, Any]) -> ToolResult:
+        name = _single_string(arguments, "name")
+        if name is None:
+            return _invalid_arguments()
+        matches: list[dict[str, JSONValue]] = []
+        for module in self.index.modules:
+            if module.parse_error is not None:
+                continue
+            path = self.root / module.path
+            try:
+                source = path.read_text(encoding="utf-8")
+                tree = ast.parse(source, filename=module.path)
+            except (OSError, UnicodeDecodeError, SyntaxError):
+                continue
+            lines = source.splitlines()
+            seen_lines: set[int] = set()
+            for node in ast.walk(tree):
+                if not _node_references_name(node, name):
+                    continue
+                line_number = getattr(node, "lineno", 0)
+                if line_number <= 0 or line_number in seen_lines:
+                    continue
+                seen_lines.add(line_number)
+                matches.append(
+                    {
+                        "path": module.path,
+                        "line": line_number,
+                        "content": lines[line_number - 1][:500],
+                    }
+                )
+        matches.sort(key=lambda item: (str(item["path"]), int(item["line"])))
+        truncated = len(matches) > MAX_SEARCH_RESULTS
+        return ToolResult(
+            True,
+            {
+                "name": name,
+                "references": matches[:MAX_SEARCH_RESULTS],
+                "total_matches": len(matches),
+                "truncated": truncated,
+            },
+        )
+
+
+class InspectModuleTool(BaseTool):
+    name = "inspect_module"
+    description = "Inspect indexed symbols, imports, and parse status for a Python module."
+    parameters: ClassVar[dict[str, Any]] = {
+        "type": "object",
+        "properties": {"path": {"type": "string", "description": "Python file path"}},
+        "required": ["path"],
+        "additionalProperties": False,
+    }
+
+    def __init__(self, index: RepositoryIndex) -> None:
+        self.index = index
+
+    def execute(self, arguments: dict[str, Any]) -> ToolResult:
+        path = _single_string(arguments, "path")
+        if path is None:
+            return _invalid_arguments()
+        module = self.index.module_for_path(path)
+        if module is None:
+            return tool_error("module_not_found", "Python module was not indexed.")
+        return ToolResult(
+            True,
+            {
+                "path": module.path,
+                "module": module.module,
+                "symbols": [asdict(item) for item in module.symbols],
+                "imports": [asdict(item) for item in module.imports],
+                "parse_error": module.parse_error,
+            },
+        )
+
+
 class ReplaceTextTool(BaseTool):
     name = "replace_text"
     description = "Replace text that appears exactly once in a non-test Python source file."
@@ -362,9 +476,13 @@ class ToolRegistry:
     ) -> None:
         self.session = session
         self.workspace = session.working
+        self.index = build_repository_index(self.workspace)
         tools: tuple[BaseTool, ...] = (
             ReadFileTool(self.workspace),
             SearchCodeTool(self.workspace),
+            FindSymbolTool(self.index),
+            FindReferencesTool(self.workspace, self.index),
+            InspectModuleTool(self.index),
             ReplaceTextTool(self.workspace),
             ShowDiffTool(session),
             RunTargetTestTool(self.workspace, runner, target_node_id),
@@ -399,3 +517,20 @@ def _valid_keys(arguments: dict[str, Any], required: set[str], optional: set[str
 
 def _invalid_arguments() -> ToolResult:
     return tool_error("invalid_arguments", "Tool arguments do not match the schema.")
+
+
+def _single_string(arguments: dict[str, Any], key: str) -> str | None:
+    value = arguments.get(key)
+    if set(arguments) != {key} or not isinstance(value, str) or not value:
+        return None
+    return value
+
+
+def _node_references_name(node: ast.AST, name: str) -> bool:
+    if isinstance(node, ast.Name):
+        return node.id == name
+    if isinstance(node, ast.Attribute):
+        return node.attr == name
+    if isinstance(node, ast.alias):
+        return node.name.rsplit(".", 1)[-1] == name or node.asname == name
+    return False

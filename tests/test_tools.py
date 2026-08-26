@@ -191,16 +191,40 @@ def test_run_target_test_rejects_missing_parser_node_id(tool_registry):
     assert result.error.code == "target_test_unavailable"
 
 
-def test_registry_exports_five_openai_function_schemas(tool_registry):
+def test_registry_exports_eight_openai_function_schemas(tool_registry):
     names = {item["function"]["name"] for item in tool_registry.schemas()}
 
     assert names == {
         "read_file",
         "search_code",
+        "find_symbol",
+        "find_references",
+        "inspect_module",
         "replace_text",
         "show_diff",
         "run_target_test",
     }
+
+
+def test_symbol_and_module_tools_return_locations(tool_registry):
+    symbol = tool_registry.execute("find_symbol", {"name": "add"})
+    module = tool_registry.execute("inspect_module", {"path": "app.py"})
+
+    assert symbol.data["definitions"][0]["path"] == "app.py"
+    assert module.data["symbols"][0]["name"] == "add"
+    assert module.data["parse_error"] is None
+
+
+def test_find_references_returns_possible_ast_locations(tool_registry):
+    result = tool_registry.execute("find_references", {"name": "add"})
+
+    assert result.ok is True
+    assert result.data["name"] == "add"
+    assert result.data["total_matches"] >= 2
+    assert any(
+        item["path"] == "tests/test_app.py"
+        for item in result.data["references"]
+    )
 
 
 def test_registry_returns_structured_unknown_tool_error(tool_registry):
@@ -209,4 +233,3 @@ def test_registry_returns_structured_unknown_tool_error(tool_registry):
     assert result.error is not None
     assert result.error.code == "unknown_tool"
     assert json.loads(result.to_json())["error"]["code"] == "unknown_tool"
-

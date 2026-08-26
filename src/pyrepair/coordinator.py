@@ -4,6 +4,7 @@ from collections.abc import Callable
 from pathlib import Path
 from typing import Any
 
+from .context_builder import ContextBuilder
 from .deepseek import DeepSeekError
 from .models import (
     AgentRun,
@@ -36,6 +37,7 @@ class RepairCoordinator:
         parser: PytestParser,
         registry_factory: Callable[[WorkspaceSession, str], ToolRegistry],
         agent_factory: Callable[[ToolRegistry], Any],
+        context_builder: ContextBuilder,
         policy: PatchPolicyGate,
         reviewer_factory: Callable[[], Any],
         verifier: Verifier,
@@ -47,6 +49,7 @@ class RepairCoordinator:
         self.parser = parser
         self.registry_factory = registry_factory
         self.agent_factory = agent_factory
+        self.context_builder = context_builder
         self.policy = policy
         self.reviewer_factory = reviewer_factory
         self.verifier = verifier
@@ -125,6 +128,18 @@ class RepairCoordinator:
                     attempt_records=attempt_records,
                 )
 
+            context_bundle = self.context_builder.build(session.baseline, failure_report)
+            recorder.append_event(
+                {
+                    "type": "context_built",
+                    "total_chars": context_bundle.total_chars,
+                    "snippet_count": len(context_bundle.snippets),
+                    "selected_files": sorted(
+                        {item.path for item in context_bundle.snippets}
+                    ),
+                    "truncated": context_bundle.truncated,
+                }
+            )
             baseline_failures = {item.node_id for item in baseline.failures}
             baseline_failures.add(failure_report.node_id)
             evidence: list[str] = []
@@ -136,6 +151,7 @@ class RepairCoordinator:
                 agent_run = self.agent_factory(registry).run(
                     failure_report,
                     tuple(evidence),
+                    context=context_bundle,
                 )
                 self._record_agent_turns(recorder, attempt, agent_run) # 记录 token 用量
                 snapshot = session.snapshot()     # agent 改完 → 对比 baseline/working 生成补丁

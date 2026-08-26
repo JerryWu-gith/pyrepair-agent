@@ -2,6 +2,7 @@ import json
 
 import pytest
 
+from pyrepair.context_builder import ContextBundle, ContextSnippet
 from pyrepair.models import FailureReport, ModelTurn, ToolCallRequest
 from pyrepair.repair_agent import RepairAgent
 from pyrepair.testing import TestRunner as PytestRunner
@@ -38,6 +39,19 @@ def failure_report() -> FailureReport:
         summary="assert -1 == 5",
         related_files=("app.py", "tests/test_app.py"),
     )
+
+
+def context_bundle(path: str) -> ContextBundle:
+    snippet = ContextSnippet(
+        path,
+        1,
+        2,
+        "add",
+        "traceback_file",
+        100,
+        "def add(a, b):\n    return a - b",
+    )
+    return ContextBundle("files: app.py", (snippet,), (path,), 60, False)
 
 
 def test_agent_executes_tools_and_returns_results_to_model(registry):
@@ -125,6 +139,19 @@ def test_agent_includes_previous_attempt_evidence_in_initial_request(registry):
         "protected_path:tests/test_app.py",
         "target test still fails",
     ]
+
+
+def test_agent_initial_payload_contains_untrusted_context(registry):
+    llm = FakeLLM([model_text_turn("stop")])
+
+    RepairAgent(llm, registry).run(
+        failure_report(),
+        context=context_bundle("src/app.py"),
+    )
+
+    payload = json.loads(llm.requests[0][0][1]["content"])
+    assert payload["context"]["snippets"][0]["path"] == "src/app.py"
+    assert payload["context"]["snippets"][0]["trusted"] is False
 
 
 def test_agent_does_not_execute_tool_call_beyond_limit(registry):

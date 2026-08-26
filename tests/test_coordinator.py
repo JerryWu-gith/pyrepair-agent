@@ -3,6 +3,7 @@ from pathlib import Path
 
 import pytest
 
+from pyrepair.context_builder import ContextBuilder
 from pyrepair.coordinator import CoordinatorError, RepairCoordinator
 from pyrepair.deepseek import DeepSeekError
 from pyrepair.models import AgentRun, ModelTurn, PytestFailure, RepairRequest, ReviewResult
@@ -61,6 +62,7 @@ def build_coordinator(
             session, selected_runner, node_id
         ),
         agent_factory=agent_factory,
+        context_builder=ContextBuilder(),
         policy=policy,
         reviewer_factory=reviewer_factory,
         verifier=Verifier(selected_runner, policy),
@@ -100,7 +102,12 @@ def test_coordinator_generates_patch_without_touching_original(tmp_path):
         encoding="utf-8"
     )
     report = json.loads((result.artifact_dir / "report.json").read_text(encoding="utf-8"))
+    events = [
+        json.loads(line)
+        for line in (result.artifact_dir / "trace.jsonl").read_text(encoding="utf-8").splitlines()
+    ]
     assert report["status"] == "success"
+    assert sum(event.get("type") == "context_built" for event in events) == 1
     assert "baseline" in phases
     assert "verify" in phases
 
@@ -247,8 +254,8 @@ def test_coordinator_records_incomplete_agent_after_patch(tmp_path):
         def __init__(self, registry):
             self.registry = registry
 
-        def run(self, report, previous_evidence=()):
-            del report, previous_evidence
+        def run(self, report, previous_evidence=(), *, context=None):
+            del report, previous_evidence, context
             path = self.registry.workspace / "app.py"
             path.write_text(
                 path.read_text(encoding="utf-8").replace("return a - b", "return a + b"),
@@ -293,8 +300,8 @@ def test_coordinator_records_deepseek_error(tmp_path):
         def __init__(self, registry):
             self.registry = registry
 
-        def run(self, report, previous_evidence=()):
-            del report, previous_evidence
+        def run(self, report, previous_evidence=(), *, context=None):
+            del report, previous_evidence, context
             raise DeepSeekError("service unavailable")
 
     coordinator = build_coordinator(
@@ -341,7 +348,8 @@ class DirectWriteAgent:
         self.registry = registry
         self.writer = writer
 
-    def run(self, report, previous_evidence=()):
+    def run(self, report, previous_evidence=(), *, context=None):
+        del report, previous_evidence, context
         self.writer(self.registry.workspace)
         return AgentRun(True, ())
 

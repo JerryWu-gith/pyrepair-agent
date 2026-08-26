@@ -3,6 +3,7 @@ from __future__ import annotations
 import json
 from typing import Any
 
+from .context_builder import ContextBundle, empty_context_bundle
 from .deepseek import ModelClient
 from .models import AgentRun, FailureReport, ModelTurn
 from .tools import ToolRegistry
@@ -29,8 +30,14 @@ class RepairAgent:
         self,
         report: FailureReport,
         previous_evidence: tuple[str, ...] = (),
+        *,
+        context: ContextBundle | None = None,
     ) -> AgentRun:
-        messages = _initial_messages(report, previous_evidence)  # 初始消息
+        messages = _initial_messages(
+            report,
+            previous_evidence,
+            context or empty_context_bundle(),
+        )  # 初始消息
         turns: list[ModelTurn] = []   # 记录所有轮次
         calls_used = 0
 
@@ -60,6 +67,7 @@ class RepairAgent:
 def _initial_messages(
     report: FailureReport,
     previous_evidence: tuple[str, ...],
+    context: ContextBundle,
 ) -> list[dict[str, Any]]:
     payload = {
         "failure": {
@@ -68,6 +76,24 @@ def _initial_messages(
             "traceback": report.traceback,
             "summary": report.summary,
             "related_files": list(report.related_files),
+        },
+        "context": {
+            "repo_overview": context.repo_overview,
+            "snippets": [
+                {
+                    "path": item.path,
+                    "start_line": item.start_line,
+                    "end_line": item.end_line,
+                    "symbol": item.symbol,
+                    "reason": item.reason,
+                    "score": item.score,
+                    "trusted": False,
+                    "content": item.content,
+                }
+                for item in context.snippets
+            ],
+            "related_files": list(context.related_files),
+            "truncated": context.truncated,
         },
         "previous_evidence": list(previous_evidence),
     }
