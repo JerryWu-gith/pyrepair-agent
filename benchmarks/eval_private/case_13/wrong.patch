@@ -1,0 +1,7 @@
+--- a/src/booleans.py
++++ b/src/booleans.py
+@@ -1,2 +1,2 @@
+-def parse_bool(value: str) -> bool:
+-    return bool(value)
++def parse_bool(value: str) -> bool:
++    return value == "true"

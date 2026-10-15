@@ -1,0 +1,7 @@
+--- a/src/access.py
++++ b/src/access.py
+@@ -1,2 +1,2 @@
+-def can_manage_users(*, is_active: bool, is_admin: bool) -> bool:
+-    return is_active or is_admin
++def can_manage_users(*, is_active: bool, is_admin: bool) -> bool:
++    return is_active and is_admin

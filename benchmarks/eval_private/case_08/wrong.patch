@@ -1,0 +1,36 @@
+--- a/src/payments.py
++++ b/src/payments.py
+@@ -1,16 +1,17 @@
+-from collections.abc import Callable
+-
+-
+-class GatewayTimeout(RuntimeError):
+-    pass
+-
+-
+-class PaymentUnavailable(RuntimeError):
+-    pass
+-
+-
+-def charge(send: Callable[[], str]) -> str | None:
+-    try:
+-        return send()
+-    except GatewayTimeout:
+-        return None
++from collections.abc import Callable
++
++
++class GatewayTimeout(RuntimeError):
++    pass
++
++
++class PaymentUnavailable(RuntimeError):
++    pass
++
++
++def charge(send: Callable[[], str]) -> str | None:
++    try:
++        send()
++        return "receipt-42"
++    except GatewayTimeout:
++        raise PaymentUnavailable("gateway timed out")

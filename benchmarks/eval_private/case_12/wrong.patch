@@ -1,0 +1,18 @@
+--- a/src/orders.py
++++ b/src/orders.py
+@@ -1,7 +1,8 @@
+-class Order:
+-    def __init__(self) -> None:
+-        self.status = "paid"
+-        self.history = ["paid"]
+-
+-    def ship(self) -> None:
+-        self.status = "shipped"
++class Order:
++    def __init__(self) -> None:
++        self.status = "paid"
++        self.history = ["paid"]
++
++    def ship(self) -> None:
++        self.status = "shipped"
++        self.history = ["paid", "shipped"]

@@ -1,0 +1,13 @@
+--- a/src/discounts.py
++++ b/src/discounts.py
+@@ -1,4 +1,6 @@
+-def discount_rate(customer_tier: str) -> float:
+-    if customer_tier == "vip":
+-        return 0.20
+-    return 0.05
++def discount_rate(customer_tier: str) -> float:
++    if customer_tier == "vip":
++        return 0.20
++    if customer_tier == "student":
++        return 0.10
++    return 0.05

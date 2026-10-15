@@ -29,7 +29,7 @@ packages = ["src/pyrepair", "src/_pyrepair_agent_internal"]
 
 [tool.pytest.ini_options]
 addopts = "-m 'not live'"
-norecursedirs = ["tests/fixtures", "examples", "benchmarks/cases", "tmp", ".pyrepair", ".pytest_cache", ".worktrees"]
+norecursedirs = ["tests/fixtures", "examples", "benchmarks/cases", "benchmarks/eval_cases", "benchmarks/eval_private", "benchmarks/results", "tmp", ".pyrepair", ".pytest_cache", ".worktrees"]
 markers = [
     "live: requires DEEPSEEK_API_KEY and makes a paid network request",
 ]

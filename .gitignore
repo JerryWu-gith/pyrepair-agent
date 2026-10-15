@@ -15,3 +15,4 @@ build/
 tmp/
 .worktrees/
 benchmarks/results/*.jsonl
+benchmarks/results/v2/

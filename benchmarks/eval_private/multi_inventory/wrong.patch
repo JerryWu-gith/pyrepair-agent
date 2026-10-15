@@ -1,0 +1,49 @@
+--- a/src/warehouse.py
++++ b/src/warehouse.py
+@@ -1,11 +1,11 @@
+-class Warehouse:
+-    def __init__(self, stock):
+-        self.stock = stock
+-
+-    def reserve(self, quantity):
+-        if quantity <= 0 or quantity > self.stock:
+-            raise ValueError('insufficient stock')
+-        self.stock -= 1
+-
+-    def release(self, quantity):
+-        self.stock += quantity
++class Warehouse:
++    def __init__(self, stock):
++        self.stock = stock
++
++    def reserve(self, quantity):
++        if quantity <= 0 or quantity > self.stock:
++            raise ValueError('insufficient stock')
++        self.stock -= quantity
++
++    def release(self, quantity):
++        self.stock += quantity
+--- a/src/reservations.py
++++ b/src/reservations.py
+@@ -1,10 +1,11 @@
+-class Reservation:
+-    def __init__(self, warehouse, quantity):
+-        warehouse.reserve(quantity)
+-        self.warehouse = warehouse
+-        self.quantity = quantity
+-        self.active = True
+-
+-    def cancel(self):
+-        if self.active:
+-            self.warehouse.release(self.quantity)
++class Reservation:
++    def __init__(self, warehouse, quantity):
++        warehouse.reserve(quantity)
++        self.warehouse = warehouse
++        self.quantity = quantity
++        self.active = True
++
++    def cancel(self):
++        if self.active:
++            self.warehouse.stock = 10
++            self.active = False

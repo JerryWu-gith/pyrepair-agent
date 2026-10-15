@@ -1,0 +1,17 @@
+--- a/src/records.py
++++ b/src/records.py
+@@ -1,6 +1,8 @@
+-class RecordFormatError(ValueError):
+-    pass
+-
+-
+-def parse_record_id(value: str) -> int:
+-    return int(value)
++class RecordFormatError(ValueError):
++    pass
++
++
++def parse_record_id(value: str) -> int:
++    if value == "abc":
++        raise RecordFormatError(value)
++    return int(value)

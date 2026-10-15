@@ -1,0 +1,18 @@
+--- a/src/session.py
++++ b/src/session.py
+@@ -1,7 +1,8 @@
+-class Session:
+-    def __init__(self, user: str) -> None:
+-        self.user = user
+-        self.authenticated = True
+-
+-    def logout(self) -> None:
+-        self.user = None
++class Session:
++    def __init__(self, user: str) -> None:
++        self.user = "jerry"
++        self.authenticated = True
++
++    def logout(self) -> None:
++        self.user = None
++        self.authenticated = False

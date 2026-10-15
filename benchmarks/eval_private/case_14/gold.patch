@@ -1,0 +1,17 @@
+--- a/src/dates.py
++++ b/src/dates.py
+@@ -1,7 +1,7 @@
+-from datetime import date
+-from time import strptime
+-
+-
+-def parse_display_date(value: str) -> date:
+-    parsed = strptime(value, "%m-%d-%Y")
+-    return date(parsed.tm_year, parsed.tm_mon, parsed.tm_mday)
++from datetime import date
++from time import strptime
++
++
++def parse_display_date(value: str) -> date:
++    parsed = strptime(value, "%d-%m-%Y")
++    return date(parsed.tm_year, parsed.tm_mon, parsed.tm_mday)

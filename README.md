@@ -154,6 +154,36 @@ python benchmarks/run_benchmark.py --model deepseek-v4-flash
 
 ## 测试与复现
 
+### Evaluation v2：独立隐藏验收（第一阶段）
+
+新增评测入口与旧 `run_benchmark.py` 并存，**不修改上述 v1 历史成绩**。v2 在全新副本上应用候选补丁，用独立可见测试与隐藏测试验收，不直接把 Agent 的 `success` 当作最终成功。
+
+- 15 个原有单 Bug 题保留源码及可见测试，补充公开任务合同、隐藏测试、参考补丁和过拟合错误补丁。
+- 新增 3 个多文件人工任务：订单金额、库存预留、时区转换。18 题均为 **synthetic/dev**，不是冻结 holdout，也不是真实开源缺陷集。
+- 任务预检要求：buggy 的指定失败可复现、原本通过的测试保持通过、参考补丁全通过、错误补丁通过可见测试但被隐藏测试拒绝。
+- 支持独立 trial、只补未完成任务的严格续跑、持久化日志与按 Repair/Review 拆分的成本；失败和技术错误不被后续成功覆盖。
+- **尚未运行 v2 live 模型评测，没有新版模型成功率。** 离线参考补丁通过不能写成模型成绩。
+
+```powershell
+# 不调用模型：校验全部 18 个任务包
+python benchmarks/run_evaluation.py validate
+
+# 不调用模型：验收一份补丁
+python benchmarks/run_evaluation.py grade --case case_04 --patch path/to/fix.patch
+
+# 会调用真实模型、产生费用；正式运行前先用单题单 trial 检查
+python benchmarks/run_evaluation.py run --case case_04 --trials 1 --model deepseek-v4-flash
+
+# 三次独立运行；trial 不是内层 attempt
+python benchmarks/run_evaluation.py run --trials 3 --model deepseek-v4-flash
+
+# 仅补未完成 trial；已结束的失败/错误不重跑
+python benchmarks/run_evaluation.py run --resume path/to/experiment
+python benchmarks/run_evaluation.py report --experiment path/to/experiment
+```
+
+产物默认位于 `benchmarks/results/v2/`。每个 trial 内仍最多 3 次 attempt，每次最多 8 次工具调用；隐藏验收结果不反馈给 Agent。目录分离不是操作系统沙盒，当前仅用于可信自建任务。详见 [v2 使用与统计口径](docs/evaluation-v2.md)。
+
 运行全部离线测试：
 
 ```powershell
@@ -199,7 +229,7 @@ Benchmark runner 会为每个 case 创建独立临时副本，并逐条追加 JS
 - 当前成功条件要求全量测试退出码为 0；包含无关预存在失败的仓库需要更明确的 baseline 语义。
 - 测试和敏感文件保护主要依赖路径分类与静态规则，不能替代容器或虚拟机隔离。
 - AST 索引在一次 attempt 内不会随编辑增量刷新，修改后的语义查询可能返回旧位置。
-- 15 个 Benchmark case 是小型固定单 Bug 任务，不等价于大型真实仓库或 SWE-bench。
+- v1 的 15 题及 v2 的 18 题均为小型人工开发任务；隐藏验收不等于未见任务，不等价于大型真实仓库或 SWE-bench。
 - 当前只适配 DeepSeek V4 Flash/Pro 的 OpenAI-compatible API；Pro 尚未完成正式评测。
 
 ## 路线图
@@ -207,5 +237,5 @@ Benchmark runner 会为每个 case 创建独立临时副本，并逐条追加 JS
 1. 建立全量 baseline，区分预存在失败与候选补丁引入的回归。
 2. 加固 `conftest.py`、非标准测试文件名和测试中立化修改的确定性检测。
 3. 在源码编辑后增量刷新 AST 索引，并让测试失败模式变化参与进展判断。
-4. 扩充多文件、多失败和真实开源仓库评测集，增加多次重复运行的稳定性指标。
+4. 在 v2 独立验收与重复运行基础上，加入容器执行、真实开源缺陷、冻结 holdout 和同条件消融实验。
 5. 保持默认仅生成候选补丁；自动应用、Commit、Push 和 PR 不进入安全默认路径。

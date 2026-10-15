@@ -1,0 +1,9 @@
+--- a/src/shipping.py
++++ b/src/shipping.py
+@@ -1,4 +1,2 @@
+-def shipping_fee(*, urgent: bool, weight_kg: float) -> int:
+-    if urgent and weight_kg > 10:
+-        return 15
+-    return 5
++def shipping_fee(*, urgent: bool, weight_kg: float) -> int:
++    return 15 if urgent else 5
