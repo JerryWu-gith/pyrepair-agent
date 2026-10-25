@@ -1,6 +1,6 @@
 --- a/src/config_merge.py
 +++ b/src/config_merge.py
-@@ -1,17 +1,17 @@
+@@ -1,17 +1,13 @@
 -"""Merge layered application settings."""
 -
 -
@@ -23,15 +23,11 @@
 +from copy import deepcopy
 +
 +
-+def _update(target, overrides):
-+    for key, value in overrides.items():
-+        if isinstance(value, dict) and isinstance(target.get(key), dict):
-+            _update(target[key], value)
-+        else:
-+            target[key] = deepcopy(value)
-+
-+
 +def merge_config(defaults, overrides):
-+    result = deepcopy(defaults)
-+    _update(result, overrides)
++    result = {key: deepcopy(value) for key, value in defaults.items()}
++    for key, value in overrides.items():
++        if isinstance(value, dict) and isinstance(defaults.get(key), dict):
++            result[key] = merge_config(defaults[key], value)
++        else:
++            result[key] = deepcopy(value)
 +    return result

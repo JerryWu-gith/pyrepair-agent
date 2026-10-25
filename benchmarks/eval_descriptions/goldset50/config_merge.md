@@ -9,6 +9,9 @@ from overrides retain their default values. Empty dictionaries merge normally.
 Falsey values, including 0, False, empty strings, empty lists, and None, are real
 overrides, not signals to fall back to defaults.
 
+Repeated references to the same container within an acyclic input are in scope.
+Overriding one key must not change values inherited under an unmentioned key.
+
 Neither input may be mutated. The returned value must share no mutable nested
 dictionary or list with either input, including inherited defaults and newly
 introduced or replacement overrides: later mutations in either direction must

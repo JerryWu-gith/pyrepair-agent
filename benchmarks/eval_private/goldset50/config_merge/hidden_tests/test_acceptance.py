@@ -59,3 +59,17 @@ def test_empty_dictionary_merges_and_empty_inputs_are_preserved():
 
 def test_empty_dictionary_replaces_scalar_value():
     assert merge_config({"value": 4}, {"value": {}}) == {"value": {}}
+
+
+def test_overriding_one_shared_default_branch_preserves_other_keys():
+    shared = {"x": 1}
+    defaults = {"a": shared, "b": shared, "nested": {"left": shared, "right": shared}}
+    result = merge_config(defaults, {"a": {"x": 2}, "nested": {"left": {"x": 3}}})
+    assert result == {
+        "a": {"x": 2}, "b": {"x": 1},
+        "nested": {"left": {"x": 3}, "right": {"x": 1}},
+    }
+    assert defaults == {
+        "a": {"x": 1}, "b": {"x": 1},
+        "nested": {"left": {"x": 1}, "right": {"x": 1}},
+    }

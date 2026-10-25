@@ -26,7 +26,8 @@
         "hidden_tests/test_acceptance.py::test_inherited_containers_are_isolated_in_both_directions",
         "hidden_tests/test_acceptance.py::test_override_containers_are_isolated_in_both_directions",
         "hidden_tests/test_acceptance.py::test_falsey_overrides_replace_values_without_fallback",
-        "hidden_tests/test_acceptance.py::test_empty_dictionary_replaces_scalar_value"
+        "hidden_tests/test_acceptance.py::test_empty_dictionary_replaces_scalar_value",
+        "hidden_tests/test_acceptance.py::test_overriding_one_shared_default_branch_preserves_other_keys"
       ],
       "pass_to_pass": [
         "tests/test_public.py::test_nonempty_values_and_unmentioned_keys_are_preserved",
