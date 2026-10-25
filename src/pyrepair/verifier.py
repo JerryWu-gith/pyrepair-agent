@@ -4,11 +4,11 @@ from pathlib import Path
 
 from .models import PatchSnapshot, VerificationResult
 from .policy import PatchPolicyGate
-from .testing import TestRunner
+from .testing import TestExecutor
 
 
 class Verifier:
-    def __init__(self, runner: TestRunner, policy: PatchPolicyGate) -> None:
+    def __init__(self, runner: TestExecutor, policy: PatchPolicyGate) -> None:
         self.runner = runner
         self.policy = policy
 

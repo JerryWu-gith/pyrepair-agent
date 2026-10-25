@@ -1,0 +1,531 @@
+{
+  "version": 1,
+  "case_id": "os_more_seekable_1269",
+  "status": "assets_prepared",
+  "nodes_status": "declared_not_collected",
+  "source": {
+    "version": 1,
+    "case_id": "os_more_seekable_1269",
+    "status": "source_verified",
+    "versions": {
+      "buggy": {
+        "tree_sha": "07449626cdd57e059a2f0ab486135fc0eba0d61b",
+        "file_count": 39,
+        "total_bytes": 686706,
+        "files": {
+          ".gitattributes": {
+            "git_blob": "9aaba7a9fe8ebe94a6354dbd72f8ec3985b4b811",
+            "sha256": "8e0056260cb5f4479f0ab03770e7b8d43e3403462a12d665641ff5b99e3d6de4",
+            "size": 81,
+            "mode": "100644"
+          },
+          ".github/ISSUE_TEMPLATE/other-issues.md": {
+            "git_blob": "c80dd09502ddba8e065a01cfe09187a135d12c56",
+            "sha256": "e21f2c602f76e451b79a728e394e5195ada112c0555ded517f5f758d5009f41e",
+            "size": 88,
+            "mode": "100644"
+          },
+          ".github/ISSUE_TEMPLATE/propose-a-new-itertool.md": {
+            "git_blob": "fa97c780bb321039c21224a0235413f141f8de11",
+            "sha256": "6f0f79660cbd5ef98afe03f80e4c281e5016e71ec4d65aed68b3cbe4009a78d3",
+            "size": 589,
+            "mode": "100644"
+          },
+          ".github/PULL_REQUEST_TEMPLATE.md": {
+            "git_blob": "04dac1d12cb67d5d95b8bb748560f42e413f4e0d",
+            "sha256": "8b82e360cd409afddd1f7f08a240f5c4f40e2e9f8d807f275efe7f33eb446ef4",
+            "size": 687,
+            "mode": "100644"
+          },
+          ".github/workflows/python-app.yml": {
+            "git_blob": "d75e4f8f1ced7de2bb712bda6e538b2f386170f3",
+            "sha256": "4ea7e8a67a75000bfdfc5c46a91f78cde96f5b0ef21d13ef504a124cce3578e5",
+            "size": 1001,
+            "mode": "100644"
+          },
+          ".gitignore": {
+            "git_blob": "ab24966bc41cea53fdd01bf83cebed8077512be2",
+            "sha256": "961f3588d7b5752df4ed52e61ab79e4046989268edf29462d89f2c0e143041d0",
+            "size": 385,
+            "mode": "100644"
+          },
+          ".readthedocs.yaml": {
+            "git_blob": "e2768e7a3ece5ae439958bcd5ab7c0c176f80f30",
+            "sha256": "ccd84b50bf3b8792d7eeb2500470e0c3d0ead95c12fbca11bead3ae5ad01b550",
+            "size": 200,
+            "mode": "100644"
+          },
+          "LICENSE": {
+            "git_blob": "0a523bece3e50519653c4d7a38399baa487fefa1",
+            "sha256": "09f1c8c9e941af3e584d59641ea9b87d83c0cb0fd007eb5ef391a7e2643c1a46",
+            "size": 1053,
+            "mode": "100644"
+          },
+          "MANIFEST.in": {
+            "git_blob": "f8b823d99a689fadcf77bd96fa5e0e7c8ff95b1f",
+            "sha256": "6994da7bced1d690bd5175528fdd79df0185c269c7b1dde739f719254d4e70d4",
+            "size": 177,
+            "mode": "100644"
+          },
+          "Makefile": {
+            "git_blob": "60c1759c61a02398cfb6706565bc9c88a6660dbc",
+            "sha256": "fd825cb050af1d7399fb28257b3591baf5d14f8ddd94d4d0bbcbc777690305db",
+            "size": 872,
+            "mode": "100644"
+          },
+          "README.rst": {
+            "git_blob": "870e98cb146f1efea435e14f446102809f215470",
+            "sha256": "6a5dad4de3ffc03544d72a70cc876e15565b250231557b566f967965d4dd1c5f",
+            "size": 41435,
+            "mode": "100644"
+          },
+          "docs/Makefile": {
+            "git_blob": "47888da7b72bcf710f88b72b9dac22749b4d8b74",
+            "sha256": "95f4fa50d01692b423c545d9fad53fc977ce116433c67f627d003fc441486a28",
+            "size": 5596,
+            "mode": "100644"
+          },
+          "docs/_static/theme_overrides.css": {
+            "git_blob": "3a451aeae168f717d5f0dc7bb4cc1536d675f5a9",
+            "sha256": "b78b73585650d7960a0552c33c2d3220fd65217e8223c7701f35f1f778b1f6b0",
+            "size": 437,
+            "mode": "100644"
+          },
+          "docs/api.rst": {
+            "git_blob": "7b40a8ec1283d4da97203fc9ebb9f36d5f6edeb4",
+            "sha256": "3136e73b774d9c33b15136e68ec9f40129a7153310d8f6296c3c3d198af9d1a8",
+            "size": 7901,
+            "mode": "100644"
+          },
+          "docs/conf.py": {
+            "git_blob": "af0af6b3c83ec10e3c674d3f83515f6d62f85b48",
+            "sha256": "2d0c0ec85ded2644cd2f6b48997aa722c7f5e729c398ccc0163b6be3c7819c08",
+            "size": 9041,
+            "mode": "100644"
+          },
+          "docs/index.rst": {
+            "git_blob": "f74d92b502865052e1e45c978619e408ceda3603",
+            "sha256": "9c4321710f0df7cb20f9a4f5d598e86309a82224fc166eb25b9b3fafebe85908",
+            "size": 34,
+            "mode": "100644"
+          },
+          "docs/license.rst": {
+            "git_blob": "123c0f54dcaeeaaeda93329a17872b5b128089c6",
+            "sha256": "f4a8d4c0f47ec36904fba4fb1f7be3fcaa045cc3fdd4766200ba755d892f0d18",
+            "size": 646,
+            "mode": "100644"
+          },
+          "docs/make.bat": {
+            "git_blob": "8023c0aa67409ee6552f3a73dff3a0522395d678",
+            "sha256": "1e37476b6c285fb58fae433c13361f82f1720e43fcb499b42b9c718a7ae1d5d7",
+            "size": 5112,
+            "mode": "100644"
+          },
+          "docs/requirements.txt": {
+            "git_blob": "c88f2581d0614dbbcea0293551e3901537e628ec",
+            "sha256": "7d9f9b3c25e96ddc47c2680ba57563df6a1ac3496bb6a2e5f9cfb01c76bff4c6",
+            "size": 24,
+            "mode": "100644"
+          },
+          "docs/testing.rst": {
+            "git_blob": "a67c90e00cdbce88a0d4eac272716d5b5b4bae54",
+            "sha256": "d6bce97abf158183c0f853a64b68b170a567474331f02b20bcd9797ae6f8a80c",
+            "size": 302,
+            "mode": "100644"
+          },
+          "docs/toctree.rst": {
+            "git_blob": "0e60e689712c1f6f7d3af53d730d6e47538c073f",
+            "sha256": "278cb4e971ef7920c9fff534c75eb847fd7ae2ee424e70347d1cef2fce367cd7",
+            "size": 137,
+            "mode": "100644"
+          },
+          "docs/versions.rst": {
+            "git_blob": "56f861481dd4f732546cbcb7a83bd54b1a21b11d",
+            "sha256": "5ee09df947898f421f80c300ea0f33f885ac96a62c39d7ffd018e52ede3d574c",
+            "size": 39103,
+            "mode": "100644"
+          },
+          "more_itertools/__init__.py": {
+            "git_blob": "c8678d0776dc5d46e3b23b247a2987cad64abf71",
+            "sha256": "19cb2d318e8d45eb7d56136a55f1452c9469d21597571c31d752aa8232a2c07b",
+            "size": 149,
+            "mode": "100644"
+          },
+          "more_itertools/__init__.pyi": {
+            "git_blob": "96f6e36c7f4ac9ea0aebdcd9e11b8d1ff092d2ef",
+            "sha256": "e41dde4f338dd4106e38ba1bd6f09f97211bda549deaeb17410f82bfe85791e0",
+            "size": 43,
+            "mode": "100644"
+          },
+          "more_itertools/more.py": {
+            "git_blob": "6d43f7b2aca2a3462bf0f75033a22fec7e205311",
+            "sha256": "3050959731820b722f19c5e49d75d6ad551298bbdd58da5400890d0896227315",
+            "size": 174856,
+            "mode": "100755"
+          },
+          "more_itertools/more.pyi": {
+            "git_blob": "927cb2134e2fd1efbc000d480a51016ffb552a6f",
+            "sha256": "68a80754717728996043ad56500342dc06b07a4c0bf99051ab3200aca95a79c9",
+            "size": 28838,
+            "mode": "100644"
+          },
+          "more_itertools/py.typed": {
+            "git_blob": "e69de29bb2d1d6434b8b29ae775ad8c2e48c5391",
+            "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+            "size": 0,
+            "mode": "100644"
+          },
+          "more_itertools/recipes.py": {
+            "git_blob": "d39d8cf8f4ff052f99f9f3634c27484c3759f350",
+            "sha256": "ea9ac19767d3949d72bd0fc24f51aff33f24a693201b5d8e595a0d58ef8f4b1c",
+            "size": 46585,
+            "mode": "100644"
+          },
+          "more_itertools/recipes.pyi": {
+            "git_blob": "d4923093995314b340d22a397c57b0f27814d1f3",
+            "sha256": "2dd48ac5ef0b502f989bd2e13923c402994244ee50a4187e2f0d59c348bf2583",
+            "size": 7020,
+            "mode": "100644"
+          },
+          "pyproject.toml": {
+            "git_blob": "9fe61f9c535645f52bfc571e6a45adaa52a7090c",
+            "sha256": "cf131f8e1bffabdfdfc9f610ae08da753ed111c460188b5c221697bc0f526b4a",
+            "size": 1572,
+            "mode": "100644"
+          },
+          "requirements/development.txt": {
+            "git_blob": "ca92c76476e00c2422014664fcf2aad4b0095e8f",
+            "sha256": "ea11594e2c832b2e83248bbb1626b61a42805b87dbcbcfe5fa8a20de5b71dcb9",
+            "size": 122,
+            "mode": "100644"
+          },
+          "requirements/packaging.txt": {
+            "git_blob": "1b8ea1ddb08b4d4a8e8078ff3b0c9903d4d9f93a",
+            "sha256": "6215d3e6c190b4f8e7c76fb03ae579b2419cea3a3ad742c4e52510ccd86e0282",
+            "size": 58,
+            "mode": "100644"
+          },
+          "requirements/testing.txt": {
+            "git_blob": "a9758706c0a7a7722081ebb6f00f41e5d45520f5",
+            "sha256": "cd26741c111c100de91fa68c6e9ba865348645da9b70c0b6672ff0f17f87ec6f",
+            "size": 14,
+            "mode": "100644"
+          },
+          "requirements/typechecks.txt": {
+            "git_blob": "f0aa93ac8e33ed68cf6516ffc2e61785693a2f94",
+            "sha256": "33eff4300845d30859eace31f902fc365134650e4521b5c9cd299db7d426133e",
+            "size": 5,
+            "mode": "100644"
+          },
+          "setup.cfg": {
+            "git_blob": "9ad33d9e3d18ec4364fb9d713bf65cd90199d63b",
+            "sha256": "309de2d8409ea9c61b8cd1509a70ef7727184a549f8bd86562fd7ff8ff74b67f",
+            "size": 601,
+            "mode": "100644"
+          },
+          "tests/__init__.py": {
+            "git_blob": "e69de29bb2d1d6434b8b29ae775ad8c2e48c5391",
+            "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+            "size": 0,
+            "mode": "100644"
+          },
+          "tests/test_more.py": {
+            "git_blob": "975702249e5aca53a93b605326e86f9e5768e9c2",
+            "sha256": "7bd5628b80335bc385ecb77bc41d6f84ebabf680b1d720af4ee457bac6f14c60",
+            "size": 253813,
+            "mode": "100644"
+          },
+          "tests/test_recipes.py": {
+            "git_blob": "f3d065a3b43c1716b2317b5208eff5876570f4b9",
+            "sha256": "3bd29d44e99492ea8d720593fa0778b35edd933321de18dc6ebf8f24192a6dc4",
+            "size": 58008,
+            "mode": "100644"
+          },
+          "tox.ini": {
+            "git_blob": "12c2f5c599f939764b85e3383a7648f4f6171894",
+            "sha256": "fc9173081557ba89093d617b5e082bd9cf278717dbf3e8cb8d50bf571aa1e9d2",
+            "size": 121,
+            "mode": "100644"
+          }
+        },
+        "repository": "more-itertools/more-itertools",
+        "commit": "1da45ae4b61a832ed080f08a8833784aad0a9534",
+        "archive_url": "https://codeload.github.com/more-itertools/more-itertools/zip/1da45ae4b61a832ed080f08a8833784aad0a9534",
+        "archive_sha256": "95eae5b6b058af6ced5486578a2a9221f496df5a8c6edbbd2b171367b80a0de5"
+      },
+      "fixed": {
+        "tree_sha": "194781c66255318bb1b69527dc13878920850d1d",
+        "file_count": 39,
+        "total_bytes": 687430,
+        "files": {
+          ".gitattributes": {
+            "git_blob": "9aaba7a9fe8ebe94a6354dbd72f8ec3985b4b811",
+            "sha256": "8e0056260cb5f4479f0ab03770e7b8d43e3403462a12d665641ff5b99e3d6de4",
+            "size": 81,
+            "mode": "100644"
+          },
+          ".github/ISSUE_TEMPLATE/other-issues.md": {
+            "git_blob": "c80dd09502ddba8e065a01cfe09187a135d12c56",
+            "sha256": "e21f2c602f76e451b79a728e394e5195ada112c0555ded517f5f758d5009f41e",
+            "size": 88,
+            "mode": "100644"
+          },
+          ".github/ISSUE_TEMPLATE/propose-a-new-itertool.md": {
+            "git_blob": "fa97c780bb321039c21224a0235413f141f8de11",
+            "sha256": "6f0f79660cbd5ef98afe03f80e4c281e5016e71ec4d65aed68b3cbe4009a78d3",
+            "size": 589,
+            "mode": "100644"
+          },
+          ".github/PULL_REQUEST_TEMPLATE.md": {
+            "git_blob": "04dac1d12cb67d5d95b8bb748560f42e413f4e0d",
+            "sha256": "8b82e360cd409afddd1f7f08a240f5c4f40e2e9f8d807f275efe7f33eb446ef4",
+            "size": 687,
+            "mode": "100644"
+          },
+          ".github/workflows/python-app.yml": {
+            "git_blob": "d75e4f8f1ced7de2bb712bda6e538b2f386170f3",
+            "sha256": "4ea7e8a67a75000bfdfc5c46a91f78cde96f5b0ef21d13ef504a124cce3578e5",
+            "size": 1001,
+            "mode": "100644"
+          },
+          ".gitignore": {
+            "git_blob": "ab24966bc41cea53fdd01bf83cebed8077512be2",
+            "sha256": "961f3588d7b5752df4ed52e61ab79e4046989268edf29462d89f2c0e143041d0",
+            "size": 385,
+            "mode": "100644"
+          },
+          ".readthedocs.yaml": {
+            "git_blob": "e2768e7a3ece5ae439958bcd5ab7c0c176f80f30",
+            "sha256": "ccd84b50bf3b8792d7eeb2500470e0c3d0ead95c12fbca11bead3ae5ad01b550",
+            "size": 200,
+            "mode": "100644"
+          },
+          "LICENSE": {
+            "git_blob": "0a523bece3e50519653c4d7a38399baa487fefa1",
+            "sha256": "09f1c8c9e941af3e584d59641ea9b87d83c0cb0fd007eb5ef391a7e2643c1a46",
+            "size": 1053,
+            "mode": "100644"
+          },
+          "MANIFEST.in": {
+            "git_blob": "f8b823d99a689fadcf77bd96fa5e0e7c8ff95b1f",
+            "sha256": "6994da7bced1d690bd5175528fdd79df0185c269c7b1dde739f719254d4e70d4",
+            "size": 177,
+            "mode": "100644"
+          },
+          "Makefile": {
+            "git_blob": "60c1759c61a02398cfb6706565bc9c88a6660dbc",
+            "sha256": "fd825cb050af1d7399fb28257b3591baf5d14f8ddd94d4d0bbcbc777690305db",
+            "size": 872,
+            "mode": "100644"
+          },
+          "README.rst": {
+            "git_blob": "870e98cb146f1efea435e14f446102809f215470",
+            "sha256": "6a5dad4de3ffc03544d72a70cc876e15565b250231557b566f967965d4dd1c5f",
+            "size": 41435,
+            "mode": "100644"
+          },
+          "docs/Makefile": {
+            "git_blob": "47888da7b72bcf710f88b72b9dac22749b4d8b74",
+            "sha256": "95f4fa50d01692b423c545d9fad53fc977ce116433c67f627d003fc441486a28",
+            "size": 5596,
+            "mode": "100644"
+          },
+          "docs/_static/theme_overrides.css": {
+            "git_blob": "3a451aeae168f717d5f0dc7bb4cc1536d675f5a9",
+            "sha256": "b78b73585650d7960a0552c33c2d3220fd65217e8223c7701f35f1f778b1f6b0",
+            "size": 437,
+            "mode": "100644"
+          },
+          "docs/api.rst": {
+            "git_blob": "7b40a8ec1283d4da97203fc9ebb9f36d5f6edeb4",
+            "sha256": "3136e73b774d9c33b15136e68ec9f40129a7153310d8f6296c3c3d198af9d1a8",
+            "size": 7901,
+            "mode": "100644"
+          },
+          "docs/conf.py": {
+            "git_blob": "af0af6b3c83ec10e3c674d3f83515f6d62f85b48",
+            "sha256": "2d0c0ec85ded2644cd2f6b48997aa722c7f5e729c398ccc0163b6be3c7819c08",
+            "size": 9041,
+            "mode": "100644"
+          },
+          "docs/index.rst": {
+            "git_blob": "f74d92b502865052e1e45c978619e408ceda3603",
+            "sha256": "9c4321710f0df7cb20f9a4f5d598e86309a82224fc166eb25b9b3fafebe85908",
+            "size": 34,
+            "mode": "100644"
+          },
+          "docs/license.rst": {
+            "git_blob": "123c0f54dcaeeaaeda93329a17872b5b128089c6",
+            "sha256": "f4a8d4c0f47ec36904fba4fb1f7be3fcaa045cc3fdd4766200ba755d892f0d18",
+            "size": 646,
+            "mode": "100644"
+          },
+          "docs/make.bat": {
+            "git_blob": "8023c0aa67409ee6552f3a73dff3a0522395d678",
+            "sha256": "1e37476b6c285fb58fae433c13361f82f1720e43fcb499b42b9c718a7ae1d5d7",
+            "size": 5112,
+            "mode": "100644"
+          },
+          "docs/requirements.txt": {
+            "git_blob": "c88f2581d0614dbbcea0293551e3901537e628ec",
+            "sha256": "7d9f9b3c25e96ddc47c2680ba57563df6a1ac3496bb6a2e5f9cfb01c76bff4c6",
+            "size": 24,
+            "mode": "100644"
+          },
+          "docs/testing.rst": {
+            "git_blob": "a67c90e00cdbce88a0d4eac272716d5b5b4bae54",
+            "sha256": "d6bce97abf158183c0f853a64b68b170a567474331f02b20bcd9797ae6f8a80c",
+            "size": 302,
+            "mode": "100644"
+          },
+          "docs/toctree.rst": {
+            "git_blob": "0e60e689712c1f6f7d3af53d730d6e47538c073f",
+            "sha256": "278cb4e971ef7920c9fff534c75eb847fd7ae2ee424e70347d1cef2fce367cd7",
+            "size": 137,
+            "mode": "100644"
+          },
+          "docs/versions.rst": {
+            "git_blob": "56f861481dd4f732546cbcb7a83bd54b1a21b11d",
+            "sha256": "5ee09df947898f421f80c300ea0f33f885ac96a62c39d7ffd018e52ede3d574c",
+            "size": 39103,
+            "mode": "100644"
+          },
+          "more_itertools/__init__.py": {
+            "git_blob": "c8678d0776dc5d46e3b23b247a2987cad64abf71",
+            "sha256": "19cb2d318e8d45eb7d56136a55f1452c9469d21597571c31d752aa8232a2c07b",
+            "size": 149,
+            "mode": "100644"
+          },
+          "more_itertools/__init__.pyi": {
+            "git_blob": "96f6e36c7f4ac9ea0aebdcd9e11b8d1ff092d2ef",
+            "sha256": "e41dde4f338dd4106e38ba1bd6f09f97211bda549deaeb17410f82bfe85791e0",
+            "size": 43,
+            "mode": "100644"
+          },
+          "more_itertools/more.py": {
+            "git_blob": "0fed9977f7aafc3cd0da6afb436f14ac1eadcbd7",
+            "sha256": "a4c609f81be675b23a63a184ca56898777bd04ac3797306a417bb06a7f85e3ea",
+            "size": 175100,
+            "mode": "100755"
+          },
+          "more_itertools/more.pyi": {
+            "git_blob": "927cb2134e2fd1efbc000d480a51016ffb552a6f",
+            "sha256": "68a80754717728996043ad56500342dc06b07a4c0bf99051ab3200aca95a79c9",
+            "size": 28838,
+            "mode": "100644"
+          },
+          "more_itertools/py.typed": {
+            "git_blob": "e69de29bb2d1d6434b8b29ae775ad8c2e48c5391",
+            "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+            "size": 0,
+            "mode": "100644"
+          },
+          "more_itertools/recipes.py": {
+            "git_blob": "d39d8cf8f4ff052f99f9f3634c27484c3759f350",
+            "sha256": "ea9ac19767d3949d72bd0fc24f51aff33f24a693201b5d8e595a0d58ef8f4b1c",
+            "size": 46585,
+            "mode": "100644"
+          },
+          "more_itertools/recipes.pyi": {
+            "git_blob": "d4923093995314b340d22a397c57b0f27814d1f3",
+            "sha256": "2dd48ac5ef0b502f989bd2e13923c402994244ee50a4187e2f0d59c348bf2583",
+            "size": 7020,
+            "mode": "100644"
+          },
+          "pyproject.toml": {
+            "git_blob": "9fe61f9c535645f52bfc571e6a45adaa52a7090c",
+            "sha256": "cf131f8e1bffabdfdfc9f610ae08da753ed111c460188b5c221697bc0f526b4a",
+            "size": 1572,
+            "mode": "100644"
+          },
+          "requirements/development.txt": {
+            "git_blob": "ca92c76476e00c2422014664fcf2aad4b0095e8f",
+            "sha256": "ea11594e2c832b2e83248bbb1626b61a42805b87dbcbcfe5fa8a20de5b71dcb9",
+            "size": 122,
+            "mode": "100644"
+          },
+          "requirements/packaging.txt": {
+            "git_blob": "1b8ea1ddb08b4d4a8e8078ff3b0c9903d4d9f93a",
+            "sha256": "6215d3e6c190b4f8e7c76fb03ae579b2419cea3a3ad742c4e52510ccd86e0282",
+            "size": 58,
+            "mode": "100644"
+          },
+          "requirements/testing.txt": {
+            "git_blob": "a9758706c0a7a7722081ebb6f00f41e5d45520f5",
+            "sha256": "cd26741c111c100de91fa68c6e9ba865348645da9b70c0b6672ff0f17f87ec6f",
+            "size": 14,
+            "mode": "100644"
+          },
+          "requirements/typechecks.txt": {
+            "git_blob": "f0aa93ac8e33ed68cf6516ffc2e61785693a2f94",
+            "sha256": "33eff4300845d30859eace31f902fc365134650e4521b5c9cd299db7d426133e",
+            "size": 5,
+            "mode": "100644"
+          },
+          "setup.cfg": {
+            "git_blob": "9ad33d9e3d18ec4364fb9d713bf65cd90199d63b",
+            "sha256": "309de2d8409ea9c61b8cd1509a70ef7727184a549f8bd86562fd7ff8ff74b67f",
+            "size": 601,
+            "mode": "100644"
+          },
+          "tests/__init__.py": {
+            "git_blob": "e69de29bb2d1d6434b8b29ae775ad8c2e48c5391",
+            "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+            "size": 0,
+            "mode": "100644"
+          },
+          "tests/test_more.py": {
+            "git_blob": "3d5e8d3fdb0dd8cb3a2b3267a21b092de8ddebf8",
+            "sha256": "b1fe253aa7e3429c66a9fde5a27202d8de414c3f879e38f32525647430e31a75",
+            "size": 254293,
+            "mode": "100644"
+          },
+          "tests/test_recipes.py": {
+            "git_blob": "f3d065a3b43c1716b2317b5208eff5876570f4b9",
+            "sha256": "3bd29d44e99492ea8d720593fa0778b35edd933321de18dc6ebf8f24192a6dc4",
+            "size": 58008,
+            "mode": "100644"
+          },
+          "tox.ini": {
+            "git_blob": "12c2f5c599f939764b85e3383a7648f4f6171894",
+            "sha256": "fc9173081557ba89093d617b5e082bd9cf278717dbf3e8cb8d50bf571aa1e9d2",
+            "size": 121,
+            "mode": "100644"
+          }
+        },
+        "repository": "more-itertools/more-itertools",
+        "commit": "b5e3886a37209bb880f17d82fbf4ba00ece0e41e",
+        "archive_url": "https://codeload.github.com/more-itertools/more-itertools/zip/b5e3886a37209bb880f17d82fbf4ba00ece0e41e",
+        "archive_sha256": "eebbde7a0ef98eb4b81de8ba0966c58eefbe9e0694a6a1e3a89f9c9ef4612764"
+      }
+    },
+    "license_path": "LICENSE"
+  },
+  "origin": {
+    "description": "Pinned upstream defect with project-authored evaluation overlay",
+    "repository": "more-itertools/more-itertools",
+    "buggy_commit": "1da45ae4b61a832ed080f08a8833784aad0a9534",
+    "fixed_commit": "b5e3886a37209bb880f17d82fbf4ba00ece0e41e",
+    "urls": [
+      "https://github.com/more-itertools/more-itertools/issues/1268",
+      "https://github.com/more-itertools/more-itertools/pull/1269"
+    ],
+    "scope": "Selected pytest files; unittest load_tests-injected doctests are not included.",
+    "upstream_ai_assistance": "not established from inspected source",
+    "preparation_status": "assets_prepared",
+    "nodes_status": "declared_not_collected"
+  },
+  "runtime_excluded": [],
+  "overlay": {
+    "public_origin": "Adapted upstream issue #1268 / PR #1269 repro; local cache regression.",
+    "hidden_origin": "Project-authored contract boundary tests; not supplied to models.",
+    "mutant_origin": "Artificial mutant: restore lookahead only when the item is truthy."
+  },
+  "overlay_sha256": {
+    "TASK.md": "7341afa37fc303be2ccf805ac2304a25387fb949f1f3f793d74d0ecb6715bd25",
+    "tests/test_pyrepair_repro.py": "d377bbee57ca96364182e5ef4793005c85116eec6b7963bf8fbde1263b35b937",
+    "hidden_tests/test_pyrepair_hidden.py": "a9d7248bdb50db9601d6cc0172edba108c59c3265c1b8f10c693ec50190ec952",
+    "gold.patch": "bef6e39f9ea4ab693c756c006d552edfa72f955d05c7fc8ffda63f0f50f8ec64",
+    "wrong.patch": "15612c65cf18249349f0918d6c4c83c376f0fd58aa37089d03dcbe1f5f857de2"
+  }
+}

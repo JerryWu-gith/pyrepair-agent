@@ -12,6 +12,7 @@ import tempfile
 from pathlib import Path
 
 from .cases import EvaluationCase, case_fingerprint, contained, prepare_case, public_files
+from .execution_policy import require_case_backend
 from .patching import PatchRejected, apply_patch_checked
 
 
@@ -125,7 +126,13 @@ def node_outcomes(probe: dict) -> dict[str, str]:
 
 
 def run_tests(
-    repo: Path, paths: tuple[str, ...], output: Path, timeout: int, required: tuple[str, ...] = ()
+    repo: Path,
+    paths: tuple[str, ...],
+    output: Path,
+    timeout: int,
+    required: tuple[str, ...] = (),
+    *,
+    extra_plugins: tuple[str, ...] = (),
 ) -> dict:
     output.parent.mkdir(parents=True, exist_ok=True)
     probe_path = output.with_suffix(".probe.json").resolve()
@@ -147,6 +154,7 @@ def run_tests(
         "no:cacheprovider",
         "-p",
         "benchmarks.evaluation.pytest_probe",
+        *(argument for plugin in extra_plugins for argument in ("-p", plugin)),
         *paths,
     ]
     result = {
@@ -201,7 +209,93 @@ def install_hidden(case: EvaluationCase, repo: Path) -> None:
         target.write_bytes(contained(case.private, relative).read_bytes())
 
 
-def grade_patch(case: EvaluationCase, patch_text: str, output: Path) -> dict:
+def _docker_integrity_error(test: dict, required: bool = False) -> str | None:
+    if not isinstance(test, dict):
+        return "test runner returned a non-object result"
+    is_docker = test.get("backend") == "docker"
+    if required and not is_docker:
+        return "opensource grading did not return trusted Docker evidence"
+    if not is_docker:
+        return None
+    integrity = test.get("integrity")
+    if (
+        not isinstance(integrity, dict)
+        or set(integrity) != {"before", "after", "unchanged"}
+        or type(integrity.get("unchanged")) is not bool
+        or integrity.get("unchanged") is not True
+        or integrity.get("before") != integrity.get("after")
+    ):
+        return "Docker stage integrity evidence is missing or inconsistent"
+    return None
+
+
+def _stage_system_error(test: dict, opensource: bool = False) -> bool:
+    return (
+        not isinstance(test, dict)
+        or test.get("status") in ("environment_error", "grader_error", "timeout")
+        or _docker_integrity_error(test, required=opensource) is not None
+        or (
+            (opensource or test.get("backend") == "docker")
+            and not isinstance(test.get("assertion_failures"), list)
+        )
+    )
+
+
+def _docker_hidden_calibration_matches(
+    test: dict, required: tuple[str, ...], must_fail: tuple[str, ...]
+) -> bool:
+    probe = test.get("probe")
+    if not isinstance(probe, dict):
+        probe = {}
+    collection_errors = test.get("collection_errors", probe.get("collection_errors", []))
+    skipped = test.get("skipped", [])
+    outcomes = test.get("outcomes", {})
+    assertions = test.get("assertion_failures", [])
+    failed_f2p = {
+        node for node in must_fail if isinstance(outcomes, dict) and outcomes.get(node) == "failed"
+    }
+    return (
+        test.get("backend") == "docker"
+        and test.get("status") == "failed"
+        and test.get("returncode") == 1
+        and isinstance(collection_errors, list)
+        and not collection_errors
+        and isinstance(skipped, list)
+        and not skipped
+        and isinstance(outcomes, dict)
+        and all(value in ("failed", "passed") for value in outcomes.values())
+        and set(required) <= outcomes.keys()
+        and isinstance(assertions, list)
+        and all(isinstance(node, str) for node in assertions)
+        and bool(failed_f2p)
+        and failed_f2p <= set(assertions)
+    )
+
+
+def _hidden_outcomes_calibrate(test: dict, required: tuple[str, ...]) -> bool:
+    probe = test.get("probe")
+    if not isinstance(probe, dict):
+        probe = {}
+    collection_errors = test.get("collection_errors", probe.get("collection_errors", []))
+    outcomes = test.get("outcomes", {})
+    return (
+        test.get("status") == "failed"
+        and test.get("returncode") == 1
+        and isinstance(collection_errors, list)
+        and not collection_errors
+        and isinstance(outcomes, dict)
+        and set(required) <= outcomes.keys()
+        and all(value in ("failed", "passed") for value in outcomes.values())
+        and any(value == "failed" for value in outcomes.values())
+    )
+
+
+def grade_patch(
+    case: EvaluationCase, patch_text: str, output: Path, *, test_runner=run_tests
+) -> dict:
+    require_case_backend(
+        case, "docker" if case.source_kind == "opensource" else "synthetic", test_runner
+    )
     output.mkdir(parents=True, exist_ok=False)
     result = {
         "case_id": case.id,
@@ -228,18 +322,33 @@ def grade_patch(case: EvaluationCase, patch_text: str, output: Path) -> dict:
                         if n.partition("::")[0] in paths
                     )
                     hashes = _tree_hashes(repo)
-                    test = run_tests(
+                    test = test_runner(
                         repo, paths, output / (stage + ".log"), case.timeout_seconds, expected
                     )
                     result[stage] = test
+                    integrity_error = _docker_integrity_error(
+                        test, required=case.source_kind == "opensource"
+                    )
+                    if integrity_error:
+                        status = test.get("status") if isinstance(test, dict) else None
+                        result.update(
+                            status=status
+                            if status in {"environment_error", "grader_error", "timeout"}
+                            else "grader_error",
+                            error=(test.get("error") if isinstance(test, dict) else None)
+                            or integrity_error,
+                        )
+                        break
                     if _tree_hashes(repo) != hashes:
                         result.update(
                             status="patch_rejected", error="candidate changed files during tests"
                         )
                         break
-                    if not test["passed"]:
+                    if not test.get("passed", False):
                         result["status"] = (
-                            stage + "_failed" if test["status"] == "failed" else test["status"]
+                            stage + "_failed"
+                            if test.get("status") == "failed"
+                            else test.get("status", "grader_error")
                         )
                         break
                 else:
@@ -254,13 +363,16 @@ def grade_patch(case: EvaluationCase, patch_text: str, output: Path) -> dict:
     return result
 
 
-def validate_case(case: EvaluationCase, output: Path) -> dict:
+def validate_case(case: EvaluationCase, output: Path, *, test_runner=run_tests) -> dict:
+    require_case_backend(
+        case, "docker" if case.source_kind == "opensource" else "synthetic", test_runner
+    )
     output.mkdir(parents=True, exist_ok=False)
     with tempfile.TemporaryDirectory(prefix="pyrepair-preflight-") as temp:
         repo = prepare_case(case, Path(temp) / "repo")
         install_hidden(case, repo)
         hashes = _tree_hashes(repo)
-        baseline = run_tests(
+        baseline = test_runner(
             repo,
             case.visible_tests + case.hidden_tests,
             output / "baseline.log",
@@ -268,18 +380,65 @@ def validate_case(case: EvaluationCase, output: Path) -> dict:
             case.fail_to_pass + case.pass_to_pass,
         )
         unchanged = _tree_hashes(repo) == hashes
-    reference = grade_patch(case, case.gold_patch.read_text(encoding="utf-8"), output / "reference")
-    mutant = grade_patch(case, case.wrong_patch.read_text(encoding="utf-8"), output / "mutant")
-    outcomes = baseline["outcomes"]
+    reference = grade_patch(
+        case,
+        case.gold_patch.read_text(encoding="utf-8"),
+        output / "reference",
+        test_runner=test_runner,
+    )
+    mutant = grade_patch(
+        case,
+        case.wrong_patch.read_text(encoding="utf-8"),
+        output / "mutant",
+        test_runner=test_runner,
+    )
+    outcomes = baseline.get("outcomes", {}) if isinstance(baseline, dict) else {}
+    opensource = case.source_kind == "opensource"
+    system_error = any(
+        _stage_system_error(stage, opensource)
+        for stage in (
+            baseline,
+            reference.get("visible"),
+            reference.get("hidden"),
+            mutant.get("visible"),
+            mutant.get("hidden"),
+        )
+        if stage is not None
+    ) or any(
+        grade.get("status") in ("environment_error", "grader_error", "timeout")
+        for grade in (reference, mutant)
+    )
+    hidden_required = tuple(
+        node
+        for node in (*case.fail_to_pass, *case.pass_to_pass)
+        if node.partition("::")[0] in case.hidden_tests
+    )
+    hidden_failures = tuple(
+        node for node in case.fail_to_pass if node.partition("::")[0] in case.hidden_tests
+    )
+    mutant_hidden_valid = _hidden_outcomes_calibrate(mutant.get("hidden") or {}, hidden_required)
+    if opensource:
+        mutant_hidden_valid = _docker_hidden_calibration_matches(
+            mutant.get("hidden") or {}, hidden_required, hidden_failures
+        )
     valid = (
-        unchanged
-        and baseline["status"] == "failed"
-        and baseline["returncode"] == 1
+        not system_error
+        and unchanged
+        and baseline.get("status") == "failed"
+        and baseline.get("returncode") == 1
         and all(outcomes.get(n) == "failed" for n in case.fail_to_pass)
         and all(outcomes.get(n) == "passed" for n in case.pass_to_pass)
         and all(v in {"failed", "passed"} for v in outcomes.values())
-        and reference["status"] == "passed"
-        and mutant["status"] == "hidden_failed"
+        and (
+            not opensource
+            or (
+                _docker_integrity_error(baseline, required=True) is None
+                and set(case.fail_to_pass) <= set(baseline.get("assertion_failures", []))
+            )
+        )
+        and reference.get("status") == "passed"
+        and mutant.get("status") == "hidden_failed"
+        and mutant_hidden_valid
     )
     result = {
         "case_id": case.id,
@@ -288,6 +447,7 @@ def validate_case(case: EvaluationCase, output: Path) -> dict:
         "baseline": baseline,
         "reference": reference,
         "mutant": mutant,
+        "system_error": system_error,
     }
     write_json(output / "validation.json", result)
     return result

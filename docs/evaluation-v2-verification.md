@@ -2,6 +2,14 @@
 
 日期：2026-10-15。基于 `28f472c` 的独立托管 worktree；本文记录工程验证，不是模型评测成绩。
 
+本文保留最初离线验收时的记录。之后的模型标识兼容修正与一次真实单题验证单独记录在 [live 冒烟记录](evaluation-v2-live-smoke.md)，不追改本表的历史数据。
+
+后续 [记录器修复验证](evaluation-v2-recorder-fix.md) 单独记录当前回归结果与 Windows 文件替换压力测试，不覆盖本次初始验收记录。
+
+2026-10-15 的 [修复后独立实跑](evaluation-v2-post-fix-full-run.md) 记录模型评测 18/18；下表仍是最初的工程验收，不改写历史数字。
+
+2026-10-16 后续 [三次重复实验](evaluation-v2-repeat3-run.md) 为 54/54，并记录 Review 误判现象；这是另一次模型评测，不是本表离线测试计数的更新。
+
 ## 已完成
 
 | 项目 | 证据 |
@@ -38,7 +46,7 @@
 
 `validation-summary.json` 记录 candidate_tasks=18、valid=18、invalid=[]。生成产物按设计忽略，不提交到 Git；可用 `python benchmarks/run_evaluation.py validate` 重新生成。源码与测试已足够重现这些离线检查。
 
-## 尚未完成、不能声称的成果
+## 初始离线验收时尚未完成、不能声称的成果
 
 - 未调用付费模型，因此没有 v2 模型通过率、稳定性或成本成绩。
 - 未接入真实开源缺陷、Docker、冻结 holdout 或消融实验。

@@ -1,0 +1,193 @@
+{
+  "version": 1,
+  "dataset": {
+    "id": "review-hard-v1",
+    "source_kind": "synthetic",
+    "split": "dev"
+  },
+  "candidates": [
+    {
+      "id": "hard_v1_case_04_positive",
+      "case_id": "case_04",
+      "patch": "private/case_04/gold.patch",
+      "expected_approved": true,
+      "category": "lower_bound",
+      "source": {
+        "kind": "manual_reference",
+        "date": "2026-10-17",
+        "note": "Reuse existing manually written reference; independently recalibrated here.",
+        "path": "benchmarks/eval_private/case_04/gold.patch",
+        "raw_sha256": "3be95e91ae894005bbc1adad509f2ca3ca5dec452002a1eea8df584d1e250903"
+      },
+      "basis": "Zero and negative pages must be rejected; last page must be accepted."
+    },
+    {
+      "id": "hard_v1_case_04_negative",
+      "case_id": "case_04",
+      "patch": "private/case_04/wrong.patch",
+      "expected_approved": false,
+      "category": "lower_bound",
+      "source": {
+        "kind": "manual_mutation",
+        "date": "2026-10-17",
+        "note": "Contract-based mutation; not sample-specific hardcoding."
+      },
+      "basis": "Zero and negative pages must be rejected; last page must be accepted."
+    },
+    {
+      "id": "hard_v1_case_13_positive",
+      "case_id": "case_13",
+      "patch": "private/case_13/gold.patch",
+      "expected_approved": true,
+      "category": "whitespace_normalization",
+      "source": {
+        "kind": "manual_reference",
+        "date": "2026-10-17",
+        "note": "Reuse existing manually written reference; independently recalibrated here.",
+        "path": "benchmarks/eval_private/case_13/gold.patch",
+        "raw_sha256": "5d0149d73aded06e75738bee11f68a7a10e047c783ea72ad33880d273363a08f"
+      },
+      "basis": "Case-insensitive true/false must allow surrounding whitespace."
+    },
+    {
+      "id": "hard_v1_case_13_negative",
+      "case_id": "case_13",
+      "patch": "private/case_13/wrong.patch",
+      "expected_approved": false,
+      "category": "whitespace_normalization",
+      "source": {
+        "kind": "manual_mutation",
+        "date": "2026-10-17",
+        "note": "Contract-based mutation; not sample-specific hardcoding."
+      },
+      "basis": "Case-insensitive true/false must allow surrounding whitespace."
+    },
+    {
+      "id": "hard_v1_case_15_positive",
+      "case_id": "case_15",
+      "patch": "private/case_15/gold.patch",
+      "expected_approved": true,
+      "category": "decimal_context_precision",
+      "source": {
+        "kind": "manually_calibrated",
+        "date": "2026-10-17",
+        "note": "Hand-checked reference; not a new model repair.",
+        "path": "benchmarks/review_cases/case_15_positive.patch",
+        "raw_sha256": "776b27d788e838d0f2335166660f427b22bfd8945b76ddb915eb46dae911b623",
+        "original_record": {
+          "kind": "manually_calibrated",
+          "date": "2026-10-16",
+          "replaces_historical_source": "benchmarks/results/v2/live-repeat3-flash-20261016-df19fe71/trials/case_15/1/execution-1/agent/.pyrepair/runs/evaluation/fix.patch",
+          "replaced_raw_sha256": "1cd801643d84cc6788bce982a7d0e534d55a66087a0c9ca7528c4ddf7df223d4",
+          "reason": "Decimal multiplication rounds at context precision. Exact ratio and integer arithmetic avoid it."
+        }
+      },
+      "basis": "Exact integer cents, including long amounts, must not depend on Decimal arithmetic precision."
+    },
+    {
+      "id": "hard_v1_case_15_negative",
+      "case_id": "case_15",
+      "patch": "private/case_15/wrong.patch",
+      "expected_approved": false,
+      "category": "decimal_context_precision",
+      "source": {
+        "kind": "historical_model_candidate",
+        "date": "2026-10-17",
+        "note": "Contract-based mutation; not sample-specific hardcoding.",
+        "path": "benchmarks/review_cases/diagnostics/case_15_historical.patch",
+        "raw_sha256": "5e00f862c7b557d39096db4317d0dd97c61328313f7c1f7bdb2052dda51f664b",
+        "original_record": {
+          "kind": "manually_calibrated",
+          "date": "2026-10-16",
+          "replaces_historical_source": "benchmarks/results/v2/live-repeat3-flash-20261016-df19fe71/trials/case_15/1/execution-1/agent/.pyrepair/runs/evaluation/fix.patch",
+          "replaced_raw_sha256": "1cd801643d84cc6788bce982a7d0e534d55a66087a0c9ca7528c4ddf7df223d4",
+          "reason": "Decimal multiplication rounds at context precision. Exact ratio and integer arithmetic avoid it."
+        }
+      },
+      "basis": "Exact integer cents, including long amounts, must not depend on Decimal arithmetic precision."
+    },
+    {
+      "id": "hard_v1_multi_orders_positive",
+      "case_id": "multi_orders",
+      "patch": "private/multi_orders/gold.patch",
+      "expected_approved": true,
+      "category": "rounding_order",
+      "source": {
+        "kind": "manual_reference",
+        "date": "2026-10-17",
+        "note": "Reuse existing manually written reference; independently recalibrated here.",
+        "path": "benchmarks/eval_private/multi_orders/gold.patch",
+        "raw_sha256": "2f91fd6cd4c59ed8d5b862e4c577883ef067b83e71bd4e9ba034876e16d7b0f5"
+      },
+      "basis": "Apply discount to the overall subtotal then floor, not floor each line."
+    },
+    {
+      "id": "hard_v1_multi_orders_negative",
+      "case_id": "multi_orders",
+      "patch": "private/multi_orders/wrong.patch",
+      "expected_approved": false,
+      "category": "rounding_order",
+      "source": {
+        "kind": "manual_mutation",
+        "date": "2026-10-17",
+        "note": "Contract-based mutation; not sample-specific hardcoding."
+      },
+      "basis": "Apply discount to the overall subtotal then floor, not floor each line."
+    },
+    {
+      "id": "hard_v1_multi_inventory_positive",
+      "case_id": "multi_inventory",
+      "patch": "private/multi_inventory/gold.patch",
+      "expected_approved": true,
+      "category": "failure_state_mutation",
+      "source": {
+        "kind": "manual_reference",
+        "date": "2026-10-17",
+        "note": "Hand-checked reference; not a new model repair."
+      },
+      "basis": "A failed reservation raises ValueError without changing stock; cancellation releases once."
+    },
+    {
+      "id": "hard_v1_multi_inventory_negative",
+      "case_id": "multi_inventory",
+      "patch": "private/multi_inventory/wrong.patch",
+      "expected_approved": false,
+      "category": "failure_state_mutation",
+      "source": {
+        "kind": "manual_mutation",
+        "date": "2026-10-17",
+        "note": "Contract-based mutation; not sample-specific hardcoding."
+      },
+      "basis": "A failed reservation raises ValueError without changing stock; cancellation releases once."
+    },
+    {
+      "id": "hard_v1_multi_time_positive",
+      "case_id": "multi_time",
+      "patch": "private/multi_time/gold.patch",
+      "expected_approved": true,
+      "category": "public_helper_contract",
+      "source": {
+        "kind": "historical_model_candidate",
+        "path": "benchmarks/results/v2/live-repeat3-flash-20261016-df19fe71/trials/multi_time/1/execution-1/agent/.pyrepair/runs/evaluation/fix.patch",
+        "raw_sha256": "39e51a8bf88de0f0721a2914de0b6e30514ee8d7a6922a2ee74f99543adca26a",
+        "copy_note": "Universal newlines normalized to LF; original bytes preserved.",
+        "reused_path": "benchmarks/review_cases/multi_time_positive.patch",
+        "reused_sha256": "829a701be8a4634d99085e002be5790355b246f91edeb267e8625ad558a3c7fc"
+      },
+      "basis": "The exposed parser returns UTC offset zero as well as preserving the instant; a correct main flow alone is insufficient."
+    },
+    {
+      "id": "hard_v1_multi_time_negative",
+      "case_id": "multi_time",
+      "patch": "private/multi_time/wrong.patch",
+      "expected_approved": false,
+      "category": "public_helper_contract",
+      "source": {
+        "kind": "manual_mutation",
+        "date": "2026-10-17",
+        "note": "Contract-based mutation; not sample-specific hardcoding."
+      },
+      "basis": "The exposed parser returns UTC offset zero as well as preserving the instant; a correct main flow alone is insufficient."
+    }
+  ]
+}

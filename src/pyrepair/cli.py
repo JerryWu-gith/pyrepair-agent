@@ -14,7 +14,7 @@ from .pytest_parser import PytestParser
 from .recorder import RecorderError, RunRecorder
 from .repair_agent import RepairAgent
 from .review_agent import ReviewAgent
-from .testing import TestRunner
+from .testing import TestExecutor, TestRunner
 from .tools import ToolRegistry
 from .verifier import Verifier
 from .workspace import WorkspaceError, WorkspaceManager
@@ -74,8 +74,14 @@ def fix(
         raise typer.Exit(code=1)
 
 
-def build_coordinator(config: AppConfig, model_enabled: bool) -> RepairCoordinator:
-    runner = TestRunner(timeout_seconds=config.pytest_timeout_seconds)
+def build_coordinator(
+    config: AppConfig,
+    model_enabled: bool,
+    *,
+    runner: TestExecutor | None = None,
+) -> RepairCoordinator:
+    if runner is None:
+        runner = TestRunner(timeout_seconds=config.pytest_timeout_seconds)
     policy = PatchPolicyGate()
     if model_enabled:
         client = DeepSeekClient(

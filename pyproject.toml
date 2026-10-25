@@ -28,10 +28,11 @@ pyrepair = "pyrepair.cli:app"
 packages = ["src/pyrepair", "src/_pyrepair_agent_internal"]
 
 [tool.pytest.ini_options]
-addopts = "-m 'not live'"
-norecursedirs = ["tests/fixtures", "examples", "benchmarks/cases", "benchmarks/eval_cases", "benchmarks/eval_private", "benchmarks/results", "tmp", ".pyrepair", ".pytest_cache", ".worktrees"]
+addopts = "-m 'not live and not docker'"
+norecursedirs = ["tests/fixtures", "examples", "benchmarks/cases", "benchmarks/eval_cases", "benchmarks/eval_private", "benchmarks/review_cases", "benchmarks/review_cases_hard_v1", "benchmarks/results", "tmp", ".pyrepair", ".pytest_cache", ".worktrees", ".superpowers"]
 markers = [
     "live: requires DEEPSEEK_API_KEY and makes a paid network request",
+    "docker: explicitly selected real Docker integration; never implicit build/pull",
 ]
 
 [tool.ruff]

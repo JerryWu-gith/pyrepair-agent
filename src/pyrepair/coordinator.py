@@ -19,7 +19,7 @@ from .models import (
 from .policy import PatchPolicyGate
 from .pytest_parser import PytestParser
 from .recorder import RunRecorder
-from .testing import TestRunner
+from .testing import TestExecutor
 from .tools import ToolRegistry
 from .verifier import Verifier
 from .workspace import WorkspaceManager, WorkspaceSession
@@ -35,7 +35,7 @@ class RepairCoordinator:
     def __init__(
         self,
         workspaces: WorkspaceManager,
-        runner: TestRunner,
+        runner: TestExecutor,
         parser: PytestParser,
         registry_factory: Callable[[WorkspaceSession, str], ToolRegistry],
         agent_factory: Callable[[ToolRegistry], Any],
@@ -223,7 +223,13 @@ class RepairCoordinator:
                     continue
 
                 self._emit("review")
-                review = self.reviewer_factory().review(failure_report, snapshot)
+                reviewer = self.reviewer_factory()
+                if context_bundle.task_contract != "":
+                    review = reviewer.review(
+                        failure_report, snapshot, task_contract=context_bundle.task_contract
+                    )
+                else:
+                    review = reviewer.review(failure_report, snapshot)
                 recorder.append_event(
                     {
                         "type": "model_turn",

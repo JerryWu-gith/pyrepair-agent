@@ -12,6 +12,17 @@ MAX_CONTEXT_CHARS = 16_000
 MAX_SNIPPETS = 8
 MAX_SNIPPET_CHARS = 2_500
 MAX_OVERVIEW_CHARS = 2_000
+MAX_TASK_CONTRACT_CHARS = 4_000
+
+
+def validate_task_contract(value: str, *, required: bool = False) -> str:
+    if not isinstance(value, str):
+        raise ValueError("task_contract must be a string")  # noqa: TRY004 - shared validation API
+    if len(value) > MAX_TASK_CONTRACT_CHARS:
+        raise ValueError("task_contract exceeds 4000 characters")
+    if (required or value != "") and not value.strip():
+        raise ValueError("task_contract must not be blank")
+    return value
 
 SCORES = {
     "traceback_file": 100,
@@ -47,6 +58,7 @@ class ContextBundle:
     related_files: tuple[str, ...]
     total_chars: int
     truncated: bool
+    task_contract: str = ""
 
 
 @dataclass

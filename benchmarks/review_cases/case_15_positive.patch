@@ -1,0 +1,10 @@
+--- a/src/money.py
++++ b/src/money.py
+@@ -1,2 +1,6 @@
++from decimal import Decimal
++
++
+ def dollars_to_cents(value: str) -> int:
+-    return int(float(value)) * 100
++    numerator, denominator = Decimal(value.strip()).as_integer_ratio()
++    return numerator * 100 // denominator

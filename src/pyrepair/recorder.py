@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import json
 import re
+import time
 from dataclasses import asdict, is_dataclass
 from datetime import UTC, datetime
 from pathlib import Path
@@ -120,7 +121,17 @@ def _atomic_write(path: Path, text: str) -> None:
     temporary = path.with_suffix(path.suffix + ".tmp")
     try:
         temporary.write_text(text, encoding="utf-8", newline="")
-        temporary.replace(path)
+        # Windows readers may briefly deny replacement. Retry only that step:
+        # keep the old file intact and never append an event twice on retry.
+        delays = (0.05, 0.1, 0.2, 0.4)
+        for attempt in range(len(delays) + 1):
+            try:
+                temporary.replace(path)
+                break
+            except PermissionError as exc:
+                if getattr(exc, "winerror", None) not in {5, 32, 33} or attempt == len(delays):
+                    raise
+                time.sleep(delays[attempt])
     except OSError as exc:
         raise RecorderError(f"写入运行产物失败：{path.name}: {exc}") from exc
 

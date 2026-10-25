@@ -1,0 +1,11 @@
+--- a/boltons/dictutils.py
++++ b/boltons/dictutils.py
+@@ -225,6 +225,8 @@
+         Called ``addlist`` for consistency with :meth:`getlist`, but
+         tuples and other sequences and iterables work.
+         """
++        if k not in self:
++            v = list(v)
+         if not v:
+             return
+         self_insert = self._insert

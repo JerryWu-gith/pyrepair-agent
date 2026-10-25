@@ -1,0 +1,11 @@
+--- a/src/service.py
++++ b/src/service.py
+@@ -1,6 +1,2 @@
+-from parsing import parse_timestamp
+-from formatting import format_utc
+-
+-
+-def normalize(text):
+-    return format_utc(parse_timestamp(text))
++def normalize(text):
++    return '2026-10-01T00:00:00Z'

@@ -130,3 +130,16 @@ def test_untrusted_wrapper_preserves_ordinary_python_operators(tmp_path):
     snippet = ContextBuilder().build(tmp_path, report).snippets[0]
 
     assert "return left < right and value & mask" in snippet.content
+def test_old_context_bundle_constructor_has_empty_task_contract():
+    from pyrepair.context_builder import ContextBundle
+
+    assert ContextBundle("", (), (), 0, False).task_contract == ""
+
+
+def test_required_task_contract_rejects_empty_text():
+    import pytest
+
+    from pyrepair.context_builder import validate_task_contract
+
+    with pytest.raises(ValueError, match="blank"):
+        validate_task_contract("", required=True)

@@ -5,10 +5,17 @@ import subprocess
 import sys
 import time
 from pathlib import Path
+from typing import Protocol
 
 from .models import TestRun
 from .pytest_capture import CaptureReportError, load_capture_report
 from .pytest_parser import parse_text_failures
+
+
+class TestExecutor(Protocol):
+    """Execution interface, not a claim that an implementation is sandboxed."""
+
+    def run(self, repo: Path, target: str | None = None) -> TestRun: ...
 
 
 class TestRunner:

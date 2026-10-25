@@ -1,0 +1,570 @@
+{
+  "version": 2,
+  "cases": [
+    {
+      "id": "case_01",
+      "revision": 1,
+      "suite": "regression",
+      "split": "dev",
+      "source_kind": "synthetic",
+      "origin": {
+        "description": "Original PyRepair hand-written regression case; external acceptance v2"
+      },
+      "buggy_path": "cases/case_01",
+      "public_description_path": "eval_descriptions/case_01.md",
+      "private_path": "eval_private/case_01",
+      "visible_tests": [
+        "tests/test_discounts.py"
+      ],
+      "hidden_tests": [
+        "hidden_tests/test_acceptance.py"
+      ],
+      "fail_to_pass": [
+        "tests/test_discounts.py::test_student_discount",
+        "hidden_tests/test_acceptance.py::test_contract"
+      ],
+      "pass_to_pass": [
+        "hidden_tests/test_acceptance.py::test_preserved"
+      ],
+      "allowed_source_paths": [
+        "src/discounts.py"
+      ],
+      "timeout_seconds": 30
+    },
+    {
+      "id": "case_02",
+      "revision": 1,
+      "suite": "regression",
+      "split": "dev",
+      "source_kind": "synthetic",
+      "origin": {
+        "description": "Original PyRepair hand-written regression case; external acceptance v2"
+      },
+      "buggy_path": "cases/case_02",
+      "public_description_path": "eval_descriptions/case_02.md",
+      "private_path": "eval_private/case_02",
+      "visible_tests": [
+        "tests/test_access.py"
+      ],
+      "hidden_tests": [
+        "hidden_tests/test_acceptance.py"
+      ],
+      "fail_to_pass": [
+        "tests/test_access.py::test_only_active_admin_can_manage_users",
+        "hidden_tests/test_acceptance.py::test_contract"
+      ],
+      "pass_to_pass": [
+        "hidden_tests/test_acceptance.py::test_preserved"
+      ],
+      "allowed_source_paths": [
+        "src/access.py"
+      ],
+      "timeout_seconds": 30
+    },
+    {
+      "id": "case_03",
+      "revision": 1,
+      "suite": "regression",
+      "split": "dev",
+      "source_kind": "synthetic",
+      "origin": {
+        "description": "Original PyRepair hand-written regression case; external acceptance v2"
+      },
+      "buggy_path": "cases/case_03",
+      "public_description_path": "eval_descriptions/case_03.md",
+      "private_path": "eval_private/case_03",
+      "visible_tests": [
+        "tests/test_shipping.py"
+      ],
+      "hidden_tests": [
+        "hidden_tests/test_acceptance.py"
+      ],
+      "fail_to_pass": [
+        "tests/test_shipping.py::test_urgent_small_parcel_uses_express_fee",
+        "hidden_tests/test_acceptance.py::test_contract"
+      ],
+      "pass_to_pass": [
+        "hidden_tests/test_acceptance.py::test_preserved"
+      ],
+      "allowed_source_paths": [
+        "src/shipping.py"
+      ],
+      "timeout_seconds": 30
+    },
+    {
+      "id": "case_04",
+      "revision": 1,
+      "suite": "regression",
+      "split": "dev",
+      "source_kind": "synthetic",
+      "origin": {
+        "description": "Original PyRepair hand-written regression case; external acceptance v2"
+      },
+      "buggy_path": "cases/case_04",
+      "public_description_path": "eval_descriptions/case_04.md",
+      "private_path": "eval_private/case_04",
+      "visible_tests": [
+        "tests/test_pagination.py"
+      ],
+      "hidden_tests": [
+        "hidden_tests/test_acceptance.py"
+      ],
+      "fail_to_pass": [
+        "tests/test_pagination.py::test_last_page_is_valid",
+        "hidden_tests/test_acceptance.py::test_contract"
+      ],
+      "pass_to_pass": [
+        "hidden_tests/test_acceptance.py::test_preserved"
+      ],
+      "allowed_source_paths": [
+        "src/pagination.py"
+      ],
+      "timeout_seconds": 30
+    },
+    {
+      "id": "case_05",
+      "revision": 1,
+      "suite": "regression",
+      "split": "dev",
+      "source_kind": "synthetic",
+      "origin": {
+        "description": "Original PyRepair hand-written regression case; external acceptance v2"
+      },
+      "buggy_path": "cases/case_05",
+      "public_description_path": "eval_descriptions/case_05.md",
+      "private_path": "eval_private/case_05",
+      "visible_tests": [
+        "tests/test_inventory.py"
+      ],
+      "hidden_tests": [
+        "hidden_tests/test_acceptance.py"
+      ],
+      "fail_to_pass": [
+        "tests/test_inventory.py::test_request_equal_to_stock_can_be_fulfilled",
+        "hidden_tests/test_acceptance.py::test_contract"
+      ],
+      "pass_to_pass": [
+        "hidden_tests/test_acceptance.py::test_preserved"
+      ],
+      "allowed_source_paths": [
+        "src/inventory.py"
+      ],
+      "timeout_seconds": 30
+    },
+    {
+      "id": "case_06",
+      "revision": 1,
+      "suite": "regression",
+      "split": "dev",
+      "source_kind": "synthetic",
+      "origin": {
+        "description": "Original PyRepair hand-written regression case; external acceptance v2"
+      },
+      "buggy_path": "cases/case_06",
+      "public_description_path": "eval_descriptions/case_06.md",
+      "private_path": "eval_private/case_06",
+      "visible_tests": [
+        "tests/test_grades.py"
+      ],
+      "hidden_tests": [
+        "hidden_tests/test_acceptance.py"
+      ],
+      "fail_to_pass": [
+        "tests/test_grades.py::test_score_of_ninety_is_a",
+        "hidden_tests/test_acceptance.py::test_contract"
+      ],
+      "pass_to_pass": [
+        "hidden_tests/test_acceptance.py::test_preserved"
+      ],
+      "allowed_source_paths": [
+        "src/grades.py"
+      ],
+      "timeout_seconds": 30
+    },
+    {
+      "id": "case_07",
+      "revision": 1,
+      "suite": "regression",
+      "split": "dev",
+      "source_kind": "synthetic",
+      "origin": {
+        "description": "Original PyRepair hand-written regression case; external acceptance v2"
+      },
+      "buggy_path": "cases/case_07",
+      "public_description_path": "eval_descriptions/case_07.md",
+      "private_path": "eval_private/case_07",
+      "visible_tests": [
+        "tests/test_settings.py"
+      ],
+      "hidden_tests": [
+        "hidden_tests/test_acceptance.py"
+      ],
+      "fail_to_pass": [
+        "tests/test_settings.py::test_missing_setting_uses_domain_error",
+        "hidden_tests/test_acceptance.py::test_contract"
+      ],
+      "pass_to_pass": [
+        "hidden_tests/test_acceptance.py::test_preserved"
+      ],
+      "allowed_source_paths": [
+        "src/settings.py"
+      ],
+      "timeout_seconds": 30
+    },
+    {
+      "id": "case_08",
+      "revision": 1,
+      "suite": "regression",
+      "split": "dev",
+      "source_kind": "synthetic",
+      "origin": {
+        "description": "Original PyRepair hand-written regression case; external acceptance v2"
+      },
+      "buggy_path": "cases/case_08",
+      "public_description_path": "eval_descriptions/case_08.md",
+      "private_path": "eval_private/case_08",
+      "visible_tests": [
+        "tests/test_payments.py"
+      ],
+      "hidden_tests": [
+        "hidden_tests/test_acceptance.py"
+      ],
+      "fail_to_pass": [
+        "tests/test_payments.py::test_timeout_is_exposed_as_payment_unavailable",
+        "hidden_tests/test_acceptance.py::test_contract"
+      ],
+      "pass_to_pass": [
+        "hidden_tests/test_acceptance.py::test_preserved"
+      ],
+      "allowed_source_paths": [
+        "src/payments.py"
+      ],
+      "timeout_seconds": 30
+    },
+    {
+      "id": "case_09",
+      "revision": 1,
+      "suite": "regression",
+      "split": "dev",
+      "source_kind": "synthetic",
+      "origin": {
+        "description": "Original PyRepair hand-written regression case; external acceptance v2"
+      },
+      "buggy_path": "cases/case_09",
+      "public_description_path": "eval_descriptions/case_09.md",
+      "private_path": "eval_private/case_09",
+      "visible_tests": [
+        "tests/test_records.py"
+      ],
+      "hidden_tests": [
+        "hidden_tests/test_acceptance.py"
+      ],
+      "fail_to_pass": [
+        "tests/test_records.py::test_invalid_record_id_uses_domain_error",
+        "hidden_tests/test_acceptance.py::test_contract"
+      ],
+      "pass_to_pass": [
+        "hidden_tests/test_acceptance.py::test_preserved"
+      ],
+      "allowed_source_paths": [
+        "src/records.py"
+      ],
+      "timeout_seconds": 30
+    },
+    {
+      "id": "case_10",
+      "revision": 1,
+      "suite": "regression",
+      "split": "dev",
+      "source_kind": "synthetic",
+      "origin": {
+        "description": "Original PyRepair hand-written regression case; external acceptance v2"
+      },
+      "buggy_path": "cases/case_10",
+      "public_description_path": "eval_descriptions/case_10.md",
+      "private_path": "eval_private/case_10",
+      "visible_tests": [
+        "tests/test_cart.py"
+      ],
+      "hidden_tests": [
+        "hidden_tests/test_acceptance.py"
+      ],
+      "fail_to_pass": [
+        "tests/test_cart.py::test_add_updates_count_by_quantity",
+        "hidden_tests/test_acceptance.py::test_contract"
+      ],
+      "pass_to_pass": [
+        "hidden_tests/test_acceptance.py::test_preserved"
+      ],
+      "allowed_source_paths": [
+        "src/cart.py"
+      ],
+      "timeout_seconds": 30
+    },
+    {
+      "id": "case_11",
+      "revision": 1,
+      "suite": "regression",
+      "split": "dev",
+      "source_kind": "synthetic",
+      "origin": {
+        "description": "Original PyRepair hand-written regression case; external acceptance v2"
+      },
+      "buggy_path": "cases/case_11",
+      "public_description_path": "eval_descriptions/case_11.md",
+      "private_path": "eval_private/case_11",
+      "visible_tests": [
+        "tests/test_session.py"
+      ],
+      "hidden_tests": [
+        "hidden_tests/test_acceptance.py"
+      ],
+      "fail_to_pass": [
+        "tests/test_session.py::test_logout_clears_authentication_state",
+        "hidden_tests/test_acceptance.py::test_contract"
+      ],
+      "pass_to_pass": [
+        "hidden_tests/test_acceptance.py::test_preserved"
+      ],
+      "allowed_source_paths": [
+        "src/session.py"
+      ],
+      "timeout_seconds": 30
+    },
+    {
+      "id": "case_12",
+      "revision": 1,
+      "suite": "regression",
+      "split": "dev",
+      "source_kind": "synthetic",
+      "origin": {
+        "description": "Original PyRepair hand-written regression case; external acceptance v2"
+      },
+      "buggy_path": "cases/case_12",
+      "public_description_path": "eval_descriptions/case_12.md",
+      "private_path": "eval_private/case_12",
+      "visible_tests": [
+        "tests/test_orders.py"
+      ],
+      "hidden_tests": [
+        "hidden_tests/test_acceptance.py"
+      ],
+      "fail_to_pass": [
+        "tests/test_orders.py::test_shipping_records_new_state",
+        "hidden_tests/test_acceptance.py::test_contract"
+      ],
+      "pass_to_pass": [
+        "hidden_tests/test_acceptance.py::test_preserved"
+      ],
+      "allowed_source_paths": [
+        "src/orders.py"
+      ],
+      "timeout_seconds": 30
+    },
+    {
+      "id": "case_13",
+      "revision": 1,
+      "suite": "regression",
+      "split": "dev",
+      "source_kind": "synthetic",
+      "origin": {
+        "description": "Original PyRepair hand-written regression case; external acceptance v2"
+      },
+      "buggy_path": "cases/case_13",
+      "public_description_path": "eval_descriptions/case_13.md",
+      "private_path": "eval_private/case_13",
+      "visible_tests": [
+        "tests/test_booleans.py"
+      ],
+      "hidden_tests": [
+        "hidden_tests/test_acceptance.py"
+      ],
+      "fail_to_pass": [
+        "tests/test_booleans.py::test_false_text_becomes_false",
+        "hidden_tests/test_acceptance.py::test_contract"
+      ],
+      "pass_to_pass": [
+        "hidden_tests/test_acceptance.py::test_preserved"
+      ],
+      "allowed_source_paths": [
+        "src/booleans.py"
+      ],
+      "timeout_seconds": 30
+    },
+    {
+      "id": "case_14",
+      "revision": 1,
+      "suite": "regression",
+      "split": "dev",
+      "source_kind": "synthetic",
+      "origin": {
+        "description": "Original PyRepair hand-written regression case; external acceptance v2"
+      },
+      "buggy_path": "cases/case_14",
+      "public_description_path": "eval_descriptions/case_14.md",
+      "private_path": "eval_private/case_14",
+      "visible_tests": [
+        "tests/test_dates.py"
+      ],
+      "hidden_tests": [
+        "hidden_tests/test_acceptance.py"
+      ],
+      "fail_to_pass": [
+        "tests/test_dates.py::test_day_first_display_date_is_parsed",
+        "hidden_tests/test_acceptance.py::test_contract"
+      ],
+      "pass_to_pass": [
+        "hidden_tests/test_acceptance.py::test_preserved"
+      ],
+      "allowed_source_paths": [
+        "src/dates.py"
+      ],
+      "timeout_seconds": 30
+    },
+    {
+      "id": "case_15",
+      "revision": 2,
+      "suite": "regression",
+      "split": "dev",
+      "source_kind": "synthetic",
+      "origin": {
+        "description": "Original PyRepair hand-written regression case; external acceptance v2",
+        "acceptance_revision": "synthetic-precision-r2",
+        "note": "Existing exact-cents contract; calibrated precision acceptance migrated from review-hard-v1."
+      },
+      "buggy_path": "cases/case_15",
+      "public_description_path": "eval_descriptions/case_15.md",
+      "private_path": "eval_private/synthetic_v3/case_15",
+      "visible_tests": [
+        "tests/test_money.py"
+      ],
+      "hidden_tests": [
+        "hidden_tests/test_acceptance.py"
+      ],
+      "fail_to_pass": [
+        "tests/test_money.py::test_fractional_dollars_keep_cents",
+        "hidden_tests/test_acceptance.py::test_contract",
+        "hidden_tests/test_acceptance.py::test_exact_cents_independent_of_decimal_context[fraction-prec2]",
+        "hidden_tests/test_acceptance.py::test_exact_cents_independent_of_decimal_context[fraction-prec28]",
+        "hidden_tests/test_acceptance.py::test_exact_cents_independent_of_decimal_context[fraction-prec64]",
+        "hidden_tests/test_acceptance.py::test_exact_cents_independent_of_decimal_context[small-prec2]",
+        "hidden_tests/test_acceptance.py::test_exact_cents_independent_of_decimal_context[small-prec28]",
+        "hidden_tests/test_acceptance.py::test_exact_cents_independent_of_decimal_context[small-prec64]",
+        "hidden_tests/test_acceptance.py::test_exact_cents_independent_of_decimal_context[large-prec2]",
+        "hidden_tests/test_acceptance.py::test_exact_cents_independent_of_decimal_context[large-prec28]",
+        "hidden_tests/test_acceptance.py::test_exact_cents_independent_of_decimal_context[large-prec64]",
+        "hidden_tests/test_acceptance.py::test_exact_cents_independent_of_decimal_context[long-prec2]",
+        "hidden_tests/test_acceptance.py::test_exact_cents_independent_of_decimal_context[long-prec28]",
+        "hidden_tests/test_acceptance.py::test_exact_cents_independent_of_decimal_context[long-prec64]",
+        "hidden_tests/test_acceptance.py::test_exact_cents_independent_of_decimal_context[long_nines-prec2]",
+        "hidden_tests/test_acceptance.py::test_exact_cents_independent_of_decimal_context[long_nines-prec28]",
+        "hidden_tests/test_acceptance.py::test_exact_cents_independent_of_decimal_context[long_nines-prec64]"
+      ],
+      "pass_to_pass": [
+        "hidden_tests/test_acceptance.py::test_preserved",
+        "hidden_tests/test_acceptance.py::test_exact_cents_independent_of_decimal_context[zero-prec2]",
+        "hidden_tests/test_acceptance.py::test_exact_cents_independent_of_decimal_context[zero-prec28]",
+        "hidden_tests/test_acceptance.py::test_exact_cents_independent_of_decimal_context[zero-prec64]"
+      ],
+      "allowed_source_paths": [
+        "src/money.py"
+      ],
+      "timeout_seconds": 30
+    },
+    {
+      "id": "multi_orders",
+      "revision": 1,
+      "suite": "capability",
+      "split": "dev",
+      "source_kind": "synthetic",
+      "origin": {
+        "description": "Hand-written multi-module pilot, not a real open-source defect"
+      },
+      "buggy_path": "eval_cases/multi_orders",
+      "public_description_path": "eval_descriptions/multi_orders.md",
+      "private_path": "eval_private/multi_orders",
+      "visible_tests": [
+        "tests/test_public.py"
+      ],
+      "hidden_tests": [
+        "hidden_tests/test_acceptance.py"
+      ],
+      "fail_to_pass": [
+        "tests/test_public.py::test_order",
+        "hidden_tests/test_acceptance.py::test_contract"
+      ],
+      "pass_to_pass": [
+        "hidden_tests/test_acceptance.py::test_preserved"
+      ],
+      "allowed_source_paths": [
+        "src/pricing.py",
+        "src/discounts.py",
+        "src/service.py"
+      ],
+      "timeout_seconds": 30
+    },
+    {
+      "id": "multi_inventory",
+      "revision": 1,
+      "suite": "capability",
+      "split": "dev",
+      "source_kind": "synthetic",
+      "origin": {
+        "description": "Hand-written multi-module pilot, not a real open-source defect"
+      },
+      "buggy_path": "eval_cases/multi_inventory",
+      "public_description_path": "eval_descriptions/multi_inventory.md",
+      "private_path": "eval_private/multi_inventory",
+      "visible_tests": [
+        "tests/test_public.py"
+      ],
+      "hidden_tests": [
+        "hidden_tests/test_acceptance.py"
+      ],
+      "fail_to_pass": [
+        "tests/test_public.py::test_order",
+        "hidden_tests/test_acceptance.py::test_contract"
+      ],
+      "pass_to_pass": [
+        "hidden_tests/test_acceptance.py::test_preserved"
+      ],
+      "allowed_source_paths": [
+        "src/warehouse.py",
+        "src/reservations.py"
+      ],
+      "timeout_seconds": 30
+    },
+    {
+      "id": "multi_time",
+      "revision": 1,
+      "suite": "capability",
+      "split": "dev",
+      "source_kind": "synthetic",
+      "origin": {
+        "description": "Hand-written multi-module pilot, not a real open-source defect"
+      },
+      "buggy_path": "eval_cases/multi_time",
+      "public_description_path": "eval_descriptions/multi_time.md",
+      "private_path": "eval_private/multi_time",
+      "visible_tests": [
+        "tests/test_public.py"
+      ],
+      "hidden_tests": [
+        "hidden_tests/test_acceptance.py"
+      ],
+      "fail_to_pass": [
+        "tests/test_public.py::test_order",
+        "hidden_tests/test_acceptance.py::test_contract"
+      ],
+      "pass_to_pass": [
+        "hidden_tests/test_acceptance.py::test_preserved"
+      ],
+      "allowed_source_paths": [
+        "src/parsing.py",
+        "src/formatting.py",
+        "src/service.py"
+      ],
+      "timeout_seconds": 30
+    }
+  ]
+}

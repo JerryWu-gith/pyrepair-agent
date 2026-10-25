@@ -16,6 +16,7 @@ from pyrepair.config import ALLOWED_MODELS
 
 from .agent_worker import WORKER_TIMEOUT, collect_result, run_agent
 from .cases import EvaluationCase, case_fingerprint, contained
+from .execution_policy import require_live_cases
 from .grading import grade_patch, validate_case, write_json
 
 PROTOCOL = 2
@@ -77,6 +78,7 @@ def _identity(cases: list[EvaluationCase], model: str, trials: int) -> dict:
 
 
 def create_experiment(cases: list[EvaluationCase], output: Path, model: str, trials: int) -> Path:
+    require_live_cases(cases)
     if model not in ALLOWED_MODELS or type(trials) is not int or not 1 <= trials <= 100:
         raise ValueError("invalid model or trial count (1..100)")
     if not cases or len({c.id for c in cases}) != len(cases):
@@ -207,6 +209,7 @@ def report_records(path: Path) -> list[dict]:
 
 
 def run_experiment(path: Path, cases: list[EvaluationCase], agent_executor=None) -> list[dict]:
+    require_live_cases(cases)
     path = path.resolve()
     config = load_config(path)
     identity = config["identity"]

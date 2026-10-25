@@ -1,0 +1,6 @@
+# Fixed benchmark assets are byte-addressed; preserve them across checkouts.
+benchmarks/cases/** -text
+benchmarks/eval_cases/** -text
+benchmarks/eval_private/** -text
+benchmarks/review_cases/** -text
+benchmarks/review_cases_hard_v1/** -text

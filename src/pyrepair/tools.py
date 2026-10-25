@@ -2,12 +2,13 @@ from __future__ import annotations
 
 import ast
 import json
+import re
 from dataclasses import asdict, dataclass, field
 from pathlib import Path
 from typing import Any, ClassVar, TypeAlias
 
 from .repository_index import RepositoryIndex, build_repository_index
-from .testing import TestRunner
+from .testing import TestExecutor
 from .workspace import EXCLUDED_NAMES, WorkspaceError, WorkspaceSession
 
 MAX_READ_CHARS = 20_000
@@ -398,14 +399,26 @@ class ReplaceTextTool(BaseTool):
         if not path.is_file():
             return tool_error("file_not_found", "File does not exist.")
         try:
-            content = path.read_text(encoding="utf-8")
+            with path.open(encoding="utf-8", newline="") as source:
+                content = source.read()
         except UnicodeDecodeError:
             return tool_error("unsupported_text_file", "File is not valid UTF-8 text.")
-        count = content.count(old_text)
+        newline_pattern = r"\r\n|\r|\n"
+        parts = (re.escape(part) for part in re.split(newline_pattern, old_text))
+        # CRLF is one logical newline: never backtrack it into two matches.
+        matches = list(re.finditer(r"(?>\r\n|\r|\n)".join(parts), content))
+        count = len(matches)
         if count != 1:
             result = tool_error("expected_one_match", "Replacement text must match exactly once.")
             return ToolResult(result.ok, result.data, result.error, {"matches": count})
-        path.write_text(content.replace(old_text, arguments["new_text"], 1), encoding="utf-8")
+        match = matches[0]
+        newline_match = re.search(newline_pattern, match.group()) or re.search(
+            newline_pattern, content
+        )
+        newline = newline_match.group() if newline_match else "\n"
+        replacement = re.sub(newline_pattern, newline, arguments["new_text"])
+        updated = content[: match.start()] + replacement + content[match.end() :]
+        path.write_text(updated, encoding="utf-8", newline="")
         return ToolResult(True, {"path": relative.as_posix(), "replacements": 1})
 
 
@@ -452,7 +465,7 @@ class RunTargetTestTool(BaseTool):
         "additionalProperties": False,
     }
 
-    def __init__(self, root: Path, runner: TestRunner, target_node_id: str | None) -> None:
+    def __init__(self, root: Path, runner: TestExecutor, target_node_id: str | None) -> None:
         self.root = root
         self.runner = runner
         self.target_node_id = target_node_id
@@ -489,7 +502,7 @@ class ToolRegistry:
     def __init__(
         self,
         session: WorkspaceSession,
-        runner: TestRunner,
+        runner: TestExecutor,
         target_node_id: str | None,
     ) -> None:
         self.session = session

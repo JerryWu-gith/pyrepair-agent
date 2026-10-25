@@ -1,0 +1,29 @@
+--- a/src/pricing.py
++++ b/src/pricing.py
+@@ -1,2 +1,2 @@
+-def subtotal(items):
+-    return sum(price for price, quantity in items)
++def subtotal(items):
++    return sum(price * quantity for price, quantity in items)
+--- a/src/discounts.py
++++ b/src/discounts.py
+@@ -1,2 +1,2 @@
+-def discount_percent(tier):
+-    return {"vip": 5, "student": 10}.get(tier, 0)
++def discount_percent(tier):
++    return {"vip": 20, "student": 10}.get(tier, 0)
+--- a/src/service.py
++++ b/src/service.py
+@@ -1,6 +1,6 @@
+-from pricing import subtotal
+-from discounts import discount_percent
+-
+-
+-def total(items, tier):
+-    return subtotal(items) * (100 - discount_percent(tier)) // 100
++from discounts import discount_percent
++
++
++def total(items, tier):
++    return sum(price * quantity * (100 - discount_percent(tier)) // 100
++               for price, quantity in items)

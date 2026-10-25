@@ -1,6 +1,8 @@
 # PyRepair Evaluation v2 使用指南
 
-本轮交付：独立验收、18 个开发任务包、重复试验与严格续跑。**不包含真实开源缺陷、Docker、冻结 holdout 或新的模型效果结论。**
+本轮交付：独立验收、18 个开发任务包、重复试验与严格续跑。[三次重复评测](evaluation-v2-repeat3-run.md) 已确认 54/54 通过可见与隐藏验收，18/18 道题均三次通过、51/54 首 attempt 通过。**仅有本开发集的有限重复证据，不包含真实开源缺陷、Docker、冻结 holdout 或长期稳定性保证。**
+
+此前的 [首次全量运行](evaluation-v2-first-full-run.md) 为 15/18，3 个记录器错误仍保留在旧实验分母。[离线修复](evaluation-v2-recorder-fix.md) 后的 [单轮 18/18](evaluation-v2-post-fix-full-run.md) 和本轮 54 次实验分开统计，历史文件保持不变。重复评测还观察到 Review 判定波动，详见新报告。
 
 ## 1. 为什么保留两套评测
 
@@ -41,11 +43,13 @@ python benchmarks/run_evaluation.py grade --case case_04 --patch path/to/fix.pat
 只有以下命令调用付费模型，先确认密钥已在当前终端可用：
 
 ```powershell
-python benchmarks/run_evaluation.py run --case case_04 --trials 1 --model deepseek-v4-flash
-python benchmarks/run_evaluation.py run --trials 3 --model deepseek-v4-flash
+python benchmarks/run_evaluation.py run --case case_04 --trials 1 --model deepseek-flash
+python benchmarks/run_evaluation.py run --trials 3 --model deepseek-flash
 python benchmarks/run_evaluation.py run --resume path/to/experiment
 python benchmarks/run_evaluation.py report --experiment path/to/experiment
 ```
+
+新版评测入口默认使用 `deepseek-flash`，这是 2026-10-15 本机查询官方模型列表时返回的 Flash 标识。历史结果中的 `deepseek-v4-flash` 原样保留，不重命名、不覆盖；更换模型标识必须新建实验，不能续跑旧身份的实验。本次标识兼容修正不改变旧 CLI 和 v1 runner 的默认值；直接使用它们时请显式传入 `--model deepseek-flash`。
 
 默认 1 trial，正式看重复稳定性时显式选 3。全部 18 题 × 3 trial = 54 次完整 Agent 运行，不是 54 次 API 调用。每次可能含多个 repair/review 请求。不要仅为重试失败而覆盖旧实验。
 

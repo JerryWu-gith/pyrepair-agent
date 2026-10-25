@@ -1,7 +1,7 @@
 import os
 from dataclasses import dataclass
 
-ALLOWED_MODELS = {"deepseek-v4-flash", "deepseek-v4-pro"}
+ALLOWED_MODELS = {"deepseek-flash", "deepseek-v4-flash", "deepseek-v4-pro"}
 
 
 class ConfigError(RuntimeError):

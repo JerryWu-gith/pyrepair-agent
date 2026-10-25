@@ -1,0 +1,23 @@
+--- a/src/parsing.py
++++ b/src/parsing.py
+@@ -1,5 +1,5 @@
+-from datetime import datetime, timezone
+-
+-
+-def parse_timestamp(text):
+-    return datetime.fromisoformat(text).replace(tzinfo=timezone.utc)
++from datetime import datetime
++
++
++def parse_timestamp(text):
++    return datetime.fromisoformat(text)
+--- a/src/formatting.py
++++ b/src/formatting.py
+@@ -1,2 +1,5 @@
+-def format_utc(value):
+-    return value.strftime('%Y-%m-%dT%H:%M:%S%z')
++from datetime import timezone
++
++
++def format_utc(value):
++    return value.astimezone(timezone.utc).strftime('%Y-%m-%dT%H:%M:%SZ')

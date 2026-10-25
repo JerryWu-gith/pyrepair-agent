@@ -171,6 +171,28 @@ def test_public_contract_reaches_model_context_without_private_assets(case, tmp_
     assert "Return the sum of two integers" in text
     assert "gold.patch" not in text
     assert bundle.total_chars <= 16000
+    contract = (repo / "TASK.md").read_text(encoding="utf-8")
+    assert bundle.task_contract == contract
+    assert bundle.repo_overview.count(contract) == 1
+
+
+@pytest.mark.parametrize("text", [None, "", "  \n", "x" * 4001], ids=["missing", "empty", "blank", "too_long"])
+def test_public_contract_rejects_missing_or_invalid_task(case, tmp_path, text):
+    from benchmarks.evaluation.agent_worker import PublicContractContext
+    from benchmarks.evaluation.cases import prepare_case
+    from pyrepair.context_builder import ContextBuilder
+    from pyrepair.models import FailureReport
+
+    repo = prepare_case(case, tmp_path / "repo")
+    task = repo / "TASK.md"
+    if text is None:
+        task.unlink()
+    else:
+        task.write_text(text, encoding="utf-8")
+    with pytest.raises(FileNotFoundError if text is None else ValueError):
+        PublicContractContext(ContextBuilder()).build(
+            repo, FailureReport(None, "AssertionError", "", "failure")
+        )
 
 
 def test_missing_candidate_artifact_is_terminal_grader_error(case, tmp_path):

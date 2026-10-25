@@ -1,0 +1,46 @@
+{
+  "version": 1,
+  "case_id": "case_15",
+  "revision": 2,
+  "collection": "synthetic-v3",
+  "preparation_status": "assets_prepared",
+  "scope": "Existing public exact-cents contract; private precision acceptance migration only. No new model result.",
+  "source_manifests": [
+    {
+      "path": "benchmarks/manifest_v2.json",
+      "sha256": "be55b1e12ffe65567bd4690e0f4f95e162dc521b0c586c6255f3c8844e6e111e"
+    },
+    {
+      "path": "benchmarks/manifest_review_hard_v1.json",
+      "sha256": "9f01cec3e4dbc840fabf8b23c27284e33f546a33367e1368470dbfb83f426ce1"
+    }
+  ],
+  "copied_files": [
+    {
+      "target": "gold.patch",
+      "source": "benchmarks/review_cases_hard_v1/private/case_15/gold.patch",
+      "sha256": "776b27d788e838d0f2335166660f427b22bfd8945b76ddb915eb46dae911b623",
+      "role": "Artificial calibrated reference using Decimal.as_integer_ratio and integer arithmetic; not a model success."
+    },
+    {
+      "target": "wrong.patch",
+      "source": "benchmarks/review_cases_hard_v1/private/case_15/wrong.patch",
+      "sha256": "5e00f862c7b557d39096db4317d0dd97c61328313f7c1f7bdb2052dda51f664b",
+      "role": "Historical Decimal multiplication candidate retained as a precision-loss counterexample; not a gold reference."
+    },
+    {
+      "target": "hidden_tests/test_acceptance.py",
+      "source": "benchmarks/review_cases_hard_v1/private/case_15/hidden_tests/test_acceptance.py",
+      "sha256": "26768ba7177453d8fd16f3935273a4c928eccb92688f1cb7df0496c5e66da470",
+      "role": "Previously calibrated review-hard-v1 acceptance: six amounts times three Decimal precisions plus preserved contract checks."
+    }
+  ],
+  "legacy_reference": {
+    "path": "benchmarks/eval_private/case_15/gold.patch",
+    "sha256": "8be70c09f851fe5a79b49dd20d0a5d5698cc332f737ca4f6c85255a72cf4e2ae",
+    "note": "Preserved original-suite reference; new precision grader must reject its context-dependent arithmetic. Historical scores are not rewritten."
+  },
+  "public_inputs_unchanged": true,
+  "old_datasets_and_results_unchanged": true,
+  "hidden_tests_must_not_enter_model": true
+}

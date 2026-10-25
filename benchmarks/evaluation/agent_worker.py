@@ -11,10 +11,36 @@ import tempfile
 from dataclasses import replace
 from pathlib import Path
 
+from pyrepair.context_builder import validate_task_contract
+
 from .cases import EvaluationCase, prepare_case
+from .execution_policy import require_live_cases
 from .grading import clean_environment, execute, write_json
 
 WORKER_TIMEOUT = 1800
+
+
+def exception_details(error: BaseException, sensitive_values: tuple[str, ...] = ()) -> dict:
+    """Keep bounded, redacted causes without dumping frames, locals or credentials."""
+    chain = []
+    seen = set()
+    current = error
+    while current is not None and id(current) not in seen and len(chain) < 5:
+        seen.add(id(current))
+        message = str(current)
+        for secret in sensitive_values:
+            if secret:
+                message = message.replace(secret, "[REDACTED]")
+        entry = {"type": type(current).__name__, "message": message[:2000]}
+        for name in ("errno", "winerror"):
+            value = getattr(current, name, None)
+            if type(value) is int:
+                entry[name] = value
+        chain.append(entry)
+        current = current.__cause__ or (
+            None if current.__suppress_context__ else current.__context__
+        )
+    return {"exception_chain": chain}
 
 
 class PublicContractContext:
@@ -25,9 +51,9 @@ class PublicContractContext:
 
     def build(self, root, report):
         bundle = self.builder.build(root, report)
-        contract = (root / "TASK.md").read_text(encoding="utf-8")
-        if len(contract) > 4000:
-            raise ValueError("public contract exceeds 4000 characters")
+        contract = validate_task_contract(
+            (root / "TASK.md").read_text(encoding="utf-8"), required=True
+        )
         overview = "Public task contract:\n" + contract + "\n" + bundle.repo_overview
         snippets = list(bundle.snippets)
 
@@ -42,6 +68,7 @@ class PublicContractContext:
             snippets=tuple(snippets),
             total_chars=size(),
             truncated=bundle.truncated or len(snippets) < len(bundle.snippets),
+            task_contract=contract,
         )
 
 
@@ -110,10 +137,71 @@ def collect_result(output: Path) -> dict:
     except (OSError, ValueError, TypeError, AttributeError):
         # Present counters are a lower bound, never a claim of zero API cost.
         result["usage_complete"] = False
+    ledger_path = output / "model-usage.jsonl"
+    if ledger_path.exists():
+        from .agent_usage import read_response_usage
+
+        try:
+            accounted = read_response_usage(ledger_path)
+            usage_known = accounted.pop("usage_known")
+            if (
+                result["status"] in {"success", "failed"}
+                and result["completed_evidence"]
+                and usage_known
+                and (
+                    accounted["model_calls"] != result["model_calls"]
+                    or accounted["usage"] != result["usage"]
+                )
+            ):
+                raise ValueError("response ledger contradicts completed coordinator trace")
+            # Alternative source, never added to the same responses in trace.
+            result.update(accounted)
+            result["usage_complete"] = (
+                result["status"] in {"success", "failed"}
+                and result["completed_evidence"]
+                and usage_known
+            )
+        except (OSError, ValueError, TypeError, KeyError):
+            result.update(status="error", usage_complete=False, error="invalid_response_ledger")
+    diagnostic = output / "worker-error.json"
+    from_summary = not diagnostic.is_file()
+    if from_summary:
+        # The diagnostic write itself may fail. The child also preserves the
+        # original cause in its summary; keep it when the parent collects again.
+        # Never recover success, usage or other claims from that summary here.
+        diagnostic = output / "agent-result.json"
+    if diagnostic.is_file():
+        try:
+            details = json.loads(diagnostic.read_text(encoding="utf-8"))
+            if from_summary:
+                if not isinstance(details, dict):
+                    raise ValueError("invalid saved worker summary")
+                if "error_details" not in details:
+                    return result
+                details = details["error_details"]
+            result.update(status="error", usage_complete=False)
+            chain = details.get("exception_chain") if isinstance(details, dict) else None
+            if (
+                not isinstance(chain, list)
+                or not chain
+                or not all(
+                    isinstance(item, dict)
+                    and isinstance(item.get("type"), str)
+                    and isinstance(item.get("message"), str)
+                    for item in chain
+                )
+            ):
+                raise ValueError("invalid exception chain")
+            result["error_details"] = details
+        except (OSError, ValueError, TypeError):
+            result.update(
+                status="error", usage_complete=False, error="invalid_worker_error_details"
+            )
     return result
 
 
 def run_agent(case: EvaluationCase, output: Path, model: str) -> dict:
+    require_live_cases((case,))
     env = clean_environment()
     key = os.getenv("DEEPSEEK_API_KEY", "")
     if not key:
@@ -153,32 +241,97 @@ def run_agent(case: EvaluationCase, output: Path, model: str) -> dict:
     return result
 
 
+def build_evaluation_coordinator(config, output: Path, *, runner=None, record_usage=False):
+    """Trusted assembly shared by the worker and owned offline FakeLLM validation."""
+    from pyrepair.cli import build_coordinator
+    from pyrepair.recorder import RunRecorder
+
+    coordinator = build_coordinator(config, model_enabled=True, runner=runner)
+    coordinator.context_builder = PublicContractContext(coordinator.context_builder)
+    coordinator.recorder_factory = lambda repo: RunRecorder(
+        output, run_id="evaluation", sensitive_values=(config.api_key,)
+    )
+    if record_usage:
+        from .agent_usage import RecordingModelClient, ResponseLedger
+
+        ledger = ResponseLedger(output / "model-usage.jsonl")
+        agent_factory = coordinator.agent_factory
+        reviewer_factory = coordinator.reviewer_factory
+
+        def agent(registry):
+            role = agent_factory(registry)
+            role.client = RecordingModelClient(role.client, "repair", ledger)
+            return role
+
+        def reviewer():
+            role = reviewer_factory()
+            role.client = RecordingModelClient(role.client, "review", ledger)
+            return role
+
+        coordinator.agent_factory = agent
+        coordinator.reviewer_factory = reviewer
+    return coordinator
+
+
+def _worker_runner(args):
+    if args.public_task is None:
+        if args.backend != "host" or args.environment_lock is not None:
+            raise ValueError("Docker backend requires a public descriptor and environment lock")
+        return None
+    from .agent_input import PublicTaskSpec, validate_public_input
+    from .container_protocol import read_json
+
+    spec = PublicTaskSpec.from_dict(read_json(args.public_task))
+    if spec.source_kind == "opensource":
+        raise ValueError(
+            "opensource live worker remains disabled; adapter validation is offline-only"
+        )
+    if args.backend != "docker" or args.environment_lock is None:
+        raise ValueError("public descriptor requires explicit Docker backend and environment lock")
+    validate_public_input(args.repo, spec)
+    from .agent_test_runner import DockerAgentTestRunner
+
+    return DockerAgentTestRunner(args.environment_lock, spec, args.output / "container-tests")
+
+
 def main(argv=None) -> int:
     parser = argparse.ArgumentParser()
     parser.add_argument("--repo", type=Path, required=True)
     parser.add_argument("--output", type=Path, required=True)
     parser.add_argument("--model", required=True)
+    parser.add_argument("--backend", choices=("host", "docker"), default="host")
+    parser.add_argument("--public-task", type=Path)
+    parser.add_argument("--environment-lock", type=Path)
     args = parser.parse_args(argv)
-    from pyrepair.cli import build_coordinator
     from pyrepair.config import load_config
     from pyrepair.models import RepairRequest
-    from pyrepair.recorder import RunRecorder
 
+    runner = _worker_runner(args)  # Source/input/backend validation precedes credential setup.
     config = load_config(model_override=args.model)
-    coordinator = build_coordinator(config, model_enabled=True)
-    coordinator.context_builder = PublicContractContext(coordinator.context_builder)
-    coordinator.recorder_factory = lambda repo: RunRecorder(
-        args.output, run_id="evaluation", sensitive_values=(config.api_key,)
+    coordinator = build_evaluation_coordinator(
+        config,
+        args.output,
+        runner=runner,
+        record_usage=runner is not None,
     )
     code = 0
+    details = None
     try:
         coordinator.run(RepairRequest(repo=args.repo, model=args.model, max_attempts=3))
     except Exception as exc:  # noqa: BLE001 - worker boundary must persist every non-interrupt failure
-        print(f"worker error: {type(exc).__name__}", flush=True)
+        details = exception_details(exc, (config.api_key,))
+        print("worker error: " + json.dumps(details, ensure_ascii=False), flush=True)
         code = 2
+        try:
+            write_json(args.output / "worker-error.json", details)
+        except OSError as write_error:
+            # Preserve the original error in stdout and agent-result even when
+            # this additional diagnostic file cannot be written.
+            safe_error = exception_details(write_error, (config.api_key,))
+            print("diagnostic write error: " + json.dumps(safe_error), flush=True)
     result = collect_result(args.output)
     if code:
-        result.update(status="error", usage_complete=False)
+        result.update(status="error", usage_complete=False, error_details=details)
     write_json(args.output / "agent-result.json", result)
     return code
 

@@ -390,6 +390,63 @@ class StaticReviewer:
         return self.result
 
 
+def test_coordinator_passes_contract_built_from_baseline_to_review(tmp_path):
+    from benchmarks.evaluation.agent_worker import PublicContractContext
+
+    repo = make_buggy_repo(tmp_path)
+    contract = "Return the sum of two integers."
+    (repo / "TASK.md").write_text(contract, encoding="utf-8")
+    client = FakeLLM([approval_turn()])
+
+    class BaselineBuilder(PublicContractContext):
+        def build(self, root, report):
+            assert root.name == "baseline"
+            return super().build(root, report)
+
+    def fix(workspace):
+        path = workspace / "app.py"
+        path.write_text(path.read_text().replace("return a - b", "return a + b"))
+
+    coordinator = build_coordinator(
+        repo, lambda registry: DirectWriteAgent(registry, fix), lambda: ReviewAgent(client)
+    )
+    coordinator.context_builder = BaselineBuilder(ContextBuilder())
+    result = coordinator.run(RepairRequest(repo=repo, max_attempts=1))
+    assert result.status == "success"
+    assert json.loads(client.requests[0][0][1]["content"])["task_contract"] == {
+        "trusted": False, "content": contract,
+    }
+
+
+def test_contract_reaches_repair_once_and_review_with_no_private_fields(tmp_path):
+    from benchmarks.evaluation.agent_worker import PublicContractContext
+
+    repo = make_buggy_repo(tmp_path)
+    contract = "Return the sum of two integers."
+    (repo / "TASK.md").write_text(contract, encoding="utf-8")
+    agent_client = FakeLLM([
+        model_tool_turn("edit", "replace_text", {
+            "path": "app.py", "old_text": "return a - b", "new_text": "return a + b",
+        }),
+        model_tool_turn("diff", "show_diff", {}),
+        model_tool_turn("test", "run_target_test", {}),
+        model_text_turn("done"),
+    ])
+    reviewer_client = FakeLLM([approval_turn()])
+    coordinator = build_coordinator(
+        repo, lambda registry: RepairAgent(agent_client, registry),
+        lambda: ReviewAgent(reviewer_client),
+    )
+    coordinator.context_builder = PublicContractContext(ContextBuilder())
+    assert coordinator.run(RepairRequest(repo=repo, max_attempts=1)).status == "success"
+    repair_text = json.dumps(agent_client.requests[0][0], ensure_ascii=False)
+    assert repair_text.count(contract) == 1
+    assert '"task_contract"' not in repair_text
+    payload = json.loads(reviewer_client.requests[0][0][1]["content"])
+    assert set(payload) == {"failure", "patch", "task_contract"}
+    assert payload["task_contract"]["content"] == contract
+
+
 def test_coordinator_rejects_policy_violation_before_review(tmp_path):
     repo = make_buggy_repo(tmp_path)
     reviewer_called = False

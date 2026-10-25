@@ -1,5 +1,7 @@
+import errno
 import json
 from pathlib import Path
+from unittest.mock import Mock
 
 import pytest
 
@@ -182,3 +184,110 @@ def test_recorder_does_not_double_windows_newlines_in_patch(tmp_path: Path) -> N
 def test_recorder_rejects_unsafe_run_id(tmp_path, run_id):
     with pytest.raises(RecorderError, match="run-id"):
         RunRecorder(tmp_path, run_id=run_id)
+
+
+def windows_permission_error(code):
+    error = PermissionError(errno.EACCES, "file temporarily unavailable")
+    error.winerror = code
+    return error
+
+
+@pytest.mark.parametrize("winerror", [5, 32, 33])
+def test_recorder_retries_transient_replace_without_losing_or_duplicating_events(
+    tmp_path, monkeypatch, winerror
+):
+    import time
+
+    recorder = RunRecorder(tmp_path, run_id="transient-replace")
+    recorder.append_event({"type": "before"})
+    trace = recorder.run_dir / "trace.jsonl"
+    before = trace.read_bytes()
+    original_replace = Path.replace
+    attempts = []
+    sleep = Mock()
+    monkeypatch.setattr(time, "sleep", sleep)
+
+    def temporarily_locked(path, target):
+        attempts.append(path)
+        if len(attempts) <= 2:
+            assert trace.read_bytes() == before
+            raise windows_permission_error(winerror)
+        return original_replace(path, target)
+
+    monkeypatch.setattr(Path, "replace", temporarily_locked)
+    recorder.append_event({"type": "after"})
+
+    events = [json.loads(line) for line in trace.read_text().splitlines()]
+    assert events == [{"type": "before"}, {"type": "after"}]
+    assert len(attempts) == 3
+    assert [call.args[0] for call in sleep.call_args_list] == [0.05, 0.1]
+    assert not trace.with_suffix(".jsonl.tmp").exists()
+
+
+def test_recorder_replace_retry_is_bounded_and_preserves_original_on_failure(
+    tmp_path, monkeypatch
+):
+    import time
+
+    recorder = RunRecorder(tmp_path, run_id="permanent-replace")
+    trace = recorder.run_dir / "trace.jsonl"
+    before = trace.read_bytes()
+    error = windows_permission_error(5)
+    replace = Mock(side_effect=error)
+    sleep = Mock()
+    monkeypatch.setattr(Path, "replace", replace)
+    monkeypatch.setattr(time, "sleep", sleep)
+
+    with pytest.raises(RecorderError) as caught:
+        recorder.append_event({"type": "not-committed"})
+
+    assert replace.call_count == 5
+    assert [call.args[0] for call in sleep.call_args_list] == [0.05, 0.1, 0.2, 0.4]
+    assert caught.value.__cause__ is error
+    assert trace.read_bytes() == before
+    assert trace.with_suffix(".jsonl.tmp").exists()
+
+
+@pytest.mark.parametrize(
+    "error", [PermissionError(errno.EACCES, "denied"), OSError(errno.ENOSPC, "full")]
+)
+def test_recorder_does_not_retry_unrelated_replace_errors(tmp_path, monkeypatch, error):
+    import time
+
+    recorder = RunRecorder(tmp_path, run_id="unrelated-error")
+    trace = recorder.run_dir / "trace.jsonl"
+    before = trace.read_bytes()
+    replace = Mock(side_effect=error)
+    sleep = Mock()
+    monkeypatch.setattr(Path, "replace", replace)
+    monkeypatch.setattr(time, "sleep", sleep)
+
+    with pytest.raises(RecorderError) as caught:
+        recorder.append_event({"type": "not-committed"})
+
+    assert replace.call_count == 1
+    assert sleep.call_count == 0
+    assert caught.value.__cause__ is error
+    assert trace.read_bytes() == before
+
+
+def test_recorder_does_not_retry_temporary_file_write_failure(tmp_path, monkeypatch):
+    import time
+
+    recorder = RunRecorder(tmp_path, run_id="temporary-write-error")
+    trace = recorder.run_dir / "trace.jsonl"
+    before = trace.read_bytes()
+    write = Mock(side_effect=windows_permission_error(5))
+    replace = Mock()
+    sleep = Mock()
+    monkeypatch.setattr(Path, "write_text", write)
+    monkeypatch.setattr(Path, "replace", replace)
+    monkeypatch.setattr(time, "sleep", sleep)
+
+    with pytest.raises(RecorderError):
+        recorder.append_event({"type": "not-committed"})
+
+    assert write.call_count == 1
+    assert replace.call_count == 0
+    assert sleep.call_count == 0
+    assert trace.read_bytes() == before

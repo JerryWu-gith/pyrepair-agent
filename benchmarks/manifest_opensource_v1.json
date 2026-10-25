@@ -1,0 +1,98 @@
+{
+  "version": 2,
+  "cases": [
+    {
+      "id": "os_more_seekable_1269",
+      "revision": 1,
+      "suite": "capability",
+      "split": "dev",
+      "source_kind": "opensource",
+      "origin": {
+        "description": "Pinned upstream defect with project-authored evaluation overlay",
+        "repository": "more-itertools/more-itertools",
+        "buggy_commit": "1da45ae4b61a832ed080f08a8833784aad0a9534",
+        "fixed_commit": "b5e3886a37209bb880f17d82fbf4ba00ece0e41e",
+        "urls": [
+          "https://github.com/more-itertools/more-itertools/issues/1268",
+          "https://github.com/more-itertools/more-itertools/pull/1269"
+        ],
+        "scope": "Selected pytest files; unittest load_tests-injected doctests are not included.",
+        "upstream_ai_assistance": "not established from inspected source",
+        "preparation_status": "assets_prepared",
+        "nodes_status": "declared_not_collected"
+      },
+      "buggy_path": "eval_cases/opensource_v1/os_more_seekable_1269/buggy",
+      "public_description_path": "eval_cases/opensource_v1/os_more_seekable_1269/TASK.md",
+      "private_path": "eval_private/opensource_v1/os_more_seekable_1269",
+      "visible_tests": [
+        "tests/test_more.py",
+        "tests/test_recipes.py",
+        "tests/test_pyrepair_repro.py"
+      ],
+      "hidden_tests": [
+        "hidden_tests/test_pyrepair_hidden.py"
+      ],
+      "fail_to_pass": [
+        "tests/test_pyrepair_repro.py::test_zero_cache_peek_preserves_sequence",
+        "tests/test_pyrepair_repro.py::test_zero_cache_bool_preserves_sequence",
+        "hidden_tests/test_pyrepair_hidden.py::test_falsey_elements_are_not_dropped",
+        "hidden_tests/test_pyrepair_hidden.py::test_interleaved_peek_bool_next"
+      ],
+      "pass_to_pass": [
+        "tests/test_pyrepair_repro.py::test_default_cache_regression",
+        "hidden_tests/test_pyrepair_hidden.py::test_empty_and_default_behavior",
+        "hidden_tests/test_pyrepair_hidden.py::test_nonzero_bounded_cache_regression"
+      ],
+      "allowed_source_paths": [
+        "more_itertools/more.py"
+      ],
+      "timeout_seconds": 120
+    },
+    {
+      "id": "os_boltons_addlist_458",
+      "revision": 1,
+      "suite": "capability",
+      "split": "dev",
+      "source_kind": "opensource",
+      "origin": {
+        "description": "Pinned upstream defect with project-authored evaluation overlay",
+        "repository": "mahmoud/boltons",
+        "buggy_commit": "d45cc414e33aa4e08a73e0993574df4397e2e9db",
+        "fixed_commit": "a1ea1030ed85137e999c0bd9b11d16368d3ab241",
+        "urls": [
+          "https://github.com/mahmoud/boltons/pull/458"
+        ],
+        "scope": "Only dictutils/urlutils selected regressions, not the entire upstream suite.",
+        "upstream_ai_assistance": "Disclosed in upstream PR #458; reference is an upstream repair, not our independent discovery.",
+        "preparation_status": "assets_prepared",
+        "nodes_status": "declared_not_collected"
+      },
+      "buggy_path": "eval_cases/opensource_v1/os_boltons_addlist_458/buggy",
+      "public_description_path": "eval_cases/opensource_v1/os_boltons_addlist_458/TASK.md",
+      "private_path": "eval_private/opensource_v1/os_boltons_addlist_458",
+      "visible_tests": [
+        "tests/test_dictutils.py",
+        "tests/test_urlutils.py",
+        "tests/test_pyrepair_repro.py"
+      ],
+      "hidden_tests": [
+        "hidden_tests/test_pyrepair_hidden.py"
+      ],
+      "fail_to_pass": [
+        "tests/test_pyrepair_repro.py::test_addlist_one_shot_iterator",
+        "hidden_tests/test_pyrepair_hidden.py::test_query_iterator_consistency",
+        "hidden_tests/test_pyrepair_hidden.py::test_empty_iterators_create_no_key",
+        "hidden_tests/test_pyrepair_hidden.py::test_generator_appends_to_existing_key"
+      ],
+      "pass_to_pass": [
+        "tests/test_pyrepair_repro.py::test_addlist_list_input_regression",
+        "hidden_tests/test_pyrepair_hidden.py::test_list_inputs_keep_multivalue_behavior"
+      ],
+      "allowed_source_paths": [
+        "boltons/dictutils.py",
+        "boltons/urlutils.py"
+      ],
+      "timeout_seconds": 120
+    }
+  ]
+}

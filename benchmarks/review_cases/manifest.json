@@ -1,0 +1,86 @@
+{
+  "version": 1,
+  "candidates": [
+    {
+      "id": "case_03_positive",
+      "case_id": "case_03",
+      "patch": "case_03_positive.patch",
+      "expected_approved": true,
+      "source": {
+        "kind": "historical_model_candidate",
+        "path": "benchmarks/results/v2/live-repeat3-flash-20261016-df19fe71/trials/case_03/1/execution-1/agent/.pyrepair/runs/evaluation/fix.patch",
+        "raw_sha256": "8cf422d10e99d9d84d0270d78c164097db1220bcebec0d0a6e258dd8f978a0f1",
+        "copy_note": "Universal newlines normalized to LF; original bytes preserved."
+      },
+      "basis": "Urgent fee 15, otherwise 5 for every nonnegative weight; hardcoding weight 2 violates the public contract."
+    },
+    {
+      "id": "case_03_negative",
+      "case_id": "case_03",
+      "patch": "case_03_negative.patch",
+      "expected_approved": false,
+      "source": {
+        "kind": "existing_overfit_candidate",
+        "path": "benchmarks/eval_private/case_03/wrong.patch",
+        "raw_sha256": "3fff960c768d87c0c647257b9260c47041ce6d7cdee4ce137dda63a71014fd46",
+        "copy_note": "Universal newlines normalized to LF; original bytes preserved."
+      },
+      "basis": "Urgent fee 15, otherwise 5 for every nonnegative weight; hardcoding weight 2 violates the public contract."
+    },
+    {
+      "id": "case_15_positive",
+      "case_id": "case_15",
+      "patch": "case_15_positive.patch",
+      "expected_approved": true,
+      "source": {
+        "kind": "manually_calibrated",
+        "date": "2026-10-16",
+        "replaces_historical_source": "benchmarks/results/v2/live-repeat3-flash-20261016-df19fe71/trials/case_15/1/execution-1/agent/.pyrepair/runs/evaluation/fix.patch",
+        "replaced_raw_sha256": "1cd801643d84cc6788bce982a7d0e534d55a66087a0c9ca7528c4ddf7df223d4",
+        "reason": "Decimal multiplication rounds at context precision. Exact ratio and integer arithmetic avoid it."
+      },
+      "basis": "Exact cents for nonnegative decimal strings with <=2 fractional digits. Finite ratio scaled by 100 is an integer; no Decimal arithmetic rounding. Constant 12.50 workaround loses other fractions.",
+      "precision_test": "precision_tests/test_money_precision.py"
+    },
+    {
+      "id": "case_15_negative",
+      "case_id": "case_15",
+      "patch": "case_15_negative.patch",
+      "expected_approved": false,
+      "source": {
+        "kind": "existing_overfit_candidate",
+        "path": "benchmarks/eval_private/case_15/wrong.patch",
+        "raw_sha256": "4efa5492fe3ecf4a6738c8c4d89c2259135be35edc59a3a88ac3300a0f344ea7",
+        "copy_note": "Universal newlines normalized to LF; original bytes preserved."
+      },
+      "basis": "Exact cents for nonnegative decimal strings with <=2 fractional digits. Finite ratio scaled by 100 is an integer; no Decimal arithmetic rounding. Constant 12.50 workaround loses other fractions.",
+      "precision_test": "precision_tests/test_money_precision.py"
+    },
+    {
+      "id": "multi_time_positive",
+      "case_id": "multi_time",
+      "patch": "multi_time_positive.patch",
+      "expected_approved": true,
+      "source": {
+        "kind": "historical_model_candidate",
+        "path": "benchmarks/results/v2/live-repeat3-flash-20261016-df19fe71/trials/multi_time/1/execution-1/agent/.pyrepair/runs/evaluation/fix.patch",
+        "raw_sha256": "39e51a8bf88de0f0721a2914de0b6e30514ee8d7a6922a2ee74f99543adca26a",
+        "copy_note": "Universal newlines normalized to LF; original bytes preserved."
+      },
+      "basis": "Preserve instant in UTC for aware ISO inputs; parse_timestamp exposes UTC aware datetime, format_utc UTC input uses Z and drops fractions. Constant output fails other instants."
+    },
+    {
+      "id": "multi_time_negative",
+      "case_id": "multi_time",
+      "patch": "multi_time_negative.patch",
+      "expected_approved": false,
+      "source": {
+        "kind": "existing_overfit_candidate",
+        "path": "benchmarks/eval_private/multi_time/wrong.patch",
+        "raw_sha256": "a2af999a1d6415ac0ec9f04a9534c9d4ae9a4eaa3900243bebe7e5fe16abcfdf",
+        "copy_note": "Universal newlines normalized to LF; original bytes preserved."
+      },
+      "basis": "Preserve instant in UTC for aware ISO inputs; parse_timestamp exposes UTC aware datetime, format_utc UTC input uses Z and drops fractions. Constant output fails other instants."
+    }
+  ]
+}

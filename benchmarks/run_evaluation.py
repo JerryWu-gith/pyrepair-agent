@@ -14,6 +14,7 @@ ROOT = Path(__file__).resolve().parents[1]
 sys.path[:0] = [str(ROOT / "src"), str(ROOT)]
 
 from benchmarks.evaluation.cases import load_cases
+from benchmarks.evaluation.execution_policy import require_case_backend, require_live_cases
 from benchmarks.evaluation.experiment import (
     create_experiment,
     load_config,
@@ -45,6 +46,9 @@ def main(argv=None):
         command.add_argument("--manifest", type=Path, default=ROOT / "benchmarks/manifest_v2.json")
         command.add_argument("--case", required=name == "grade")
         command.add_argument("--output", type=Path)
+        if name in {"validate", "grade"}:
+            command.add_argument("--backend", choices=("synthetic", "docker"), default="synthetic")
+            command.add_argument("--environment-lock", type=Path)
         if name == "grade":
             command.add_argument("--patch", type=Path, required=True)
         if name == "run":
@@ -64,12 +68,36 @@ def main(argv=None):
             cases = [c for c in cases if c.id == args.case]
             if not cases:
                 raise ValueError(f"unknown case: {args.case}")
+        if args.command == "run":
+            require_live_cases(cases)
+        else:
+            backend = args.backend
+            if (backend == "docker") != (args.environment_lock is not None):
+                raise ValueError(
+                    "--backend docker and --environment-lock must be supplied together"
+                )
+            source_kinds = {case.source_kind for case in cases}
+            if len(source_kinds) > 1:
+                raise ValueError("mixed source_kind datasets are not supported")
+            if backend == "synthetic" and args.environment_lock is not None:
+                raise ValueError("--environment-lock requires --backend docker")
+            test_runner = None
+            if backend == "docker":
+                from benchmarks.evaluation.docker_runner import DockerTestRunner
+
+                test_runner = DockerTestRunner(args.environment_lock)
+            else:
+                from benchmarks.evaluation.grading import run_tests
+
+                test_runner = run_tests
+            for case in cases:
+                require_case_backend(case, backend, test_runner)
         output = args.output or new_output(args.command)
         if args.command == "validate":
             output.mkdir(parents=True, exist_ok=False)
             results = []
             for case in cases:
-                result = validate_case(case, output / case.id)
+                result = validate_case(case, output / case.id, test_runner=test_runner)
                 results.append(result)
                 print(f"{case.id}: {result['status']}", flush=True)
             summary = {
@@ -80,15 +108,26 @@ def main(argv=None):
             }
             write_json(output / "validation-summary.json", summary)
             print(f"产物目录：{output}")
-            return 0 if summary["valid"] == len(cases) else 1
+            return (
+                2
+                if any(result.get("system_error") for result in results)
+                else 0
+                if summary["valid"] == len(cases)
+                else 1
+            )
         if args.command == "grade":
-            result = grade_patch(cases[0], args.patch.read_text(encoding="utf-8"), output)
+            result = grade_patch(
+                cases[0],
+                args.patch.read_text(encoding="utf-8"),
+                output,
+                test_runner=test_runner,
+            )
             print(f"{result['status']}\n产物目录：{output}")
             return (
                 0
                 if result["status"] == "passed"
                 else 2
-                if result["status"] in {"environment_error", "grader_error"}
+                if result["status"] in {"environment_error", "grader_error", "timeout"}
                 else 1
             )
         if args.resume:
@@ -112,7 +151,7 @@ def main(argv=None):
             output = create_experiment(
                 cases,
                 output,
-                args.model or "deepseek-v4-flash",
+                args.model or "deepseek-flash",
                 args.trials if args.trials is not None else 1,
             )
         records = run_experiment(output, cases)

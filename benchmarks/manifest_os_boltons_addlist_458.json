@@ -1,0 +1,51 @@
+{
+  "version": 2,
+  "cases": [
+    {
+      "id": "os_boltons_addlist_458",
+      "revision": 1,
+      "suite": "capability",
+      "split": "dev",
+      "source_kind": "opensource",
+      "origin": {
+        "description": "Pinned upstream defect with project-authored evaluation overlay",
+        "repository": "mahmoud/boltons",
+        "buggy_commit": "d45cc414e33aa4e08a73e0993574df4397e2e9db",
+        "fixed_commit": "a1ea1030ed85137e999c0bd9b11d16368d3ab241",
+        "urls": [
+          "https://github.com/mahmoud/boltons/pull/458"
+        ],
+        "scope": "Only dictutils/urlutils selected regressions, not the entire upstream suite.",
+        "upstream_ai_assistance": "Disclosed in upstream PR #458; reference is an upstream repair, not our independent discovery.",
+        "preparation_status": "assets_prepared",
+        "nodes_status": "declared_not_collected"
+      },
+      "buggy_path": "eval_cases/opensource_v1/os_boltons_addlist_458/buggy",
+      "public_description_path": "eval_cases/opensource_v1/os_boltons_addlist_458/TASK.md",
+      "private_path": "eval_private/opensource_v1/os_boltons_addlist_458",
+      "visible_tests": [
+        "tests/test_dictutils.py",
+        "tests/test_urlutils.py",
+        "tests/test_pyrepair_repro.py"
+      ],
+      "hidden_tests": [
+        "hidden_tests/test_pyrepair_hidden.py"
+      ],
+      "fail_to_pass": [
+        "tests/test_pyrepair_repro.py::test_addlist_one_shot_iterator",
+        "hidden_tests/test_pyrepair_hidden.py::test_query_iterator_consistency",
+        "hidden_tests/test_pyrepair_hidden.py::test_empty_iterators_create_no_key",
+        "hidden_tests/test_pyrepair_hidden.py::test_generator_appends_to_existing_key"
+      ],
+      "pass_to_pass": [
+        "tests/test_pyrepair_repro.py::test_addlist_list_input_regression",
+        "hidden_tests/test_pyrepair_hidden.py::test_list_inputs_keep_multivalue_behavior"
+      ],
+      "allowed_source_paths": [
+        "boltons/dictutils.py",
+        "boltons/urlutils.py"
+      ],
+      "timeout_seconds": 120
+    }
+  ]
+}

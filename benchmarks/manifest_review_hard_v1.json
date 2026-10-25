@@ -1,0 +1,231 @@
+{
+  "version": 2,
+  "cases": [
+    {
+      "id": "case_04",
+      "revision": 2,
+      "suite": "regression",
+      "split": "dev",
+      "source_kind": "synthetic",
+      "origin": {
+        "description": "Original PyRepair hand-written regression case; external acceptance v2",
+        "review_collection": "review-hard-v1",
+        "note": "New independent acceptance; original public task unchanged."
+      },
+      "buggy_path": "cases/case_04",
+      "public_description_path": "eval_descriptions/case_04.md",
+      "private_path": "review_cases_hard_v1/private/case_04",
+      "visible_tests": [
+        "tests/test_pagination.py"
+      ],
+      "hidden_tests": [
+        "hidden_tests/test_acceptance.py"
+      ],
+      "fail_to_pass": [
+        "tests/test_pagination.py::test_last_page_is_valid",
+        "hidden_tests/test_acceptance.py::test_contract"
+      ],
+      "pass_to_pass": [
+        "hidden_tests/test_acceptance.py::test_preserved",
+        "hidden_tests/test_acceptance.py::test_lower_boundaries"
+      ],
+      "allowed_source_paths": [
+        "src/pagination.py"
+      ],
+      "timeout_seconds": 30
+    },
+    {
+      "id": "case_13",
+      "revision": 2,
+      "suite": "regression",
+      "split": "dev",
+      "source_kind": "synthetic",
+      "origin": {
+        "description": "Original PyRepair hand-written regression case; external acceptance v2",
+        "review_collection": "review-hard-v1",
+        "note": "New independent acceptance; original public task unchanged."
+      },
+      "buggy_path": "cases/case_13",
+      "public_description_path": "eval_descriptions/case_13.md",
+      "private_path": "review_cases_hard_v1/private/case_13",
+      "visible_tests": [
+        "tests/test_booleans.py"
+      ],
+      "hidden_tests": [
+        "hidden_tests/test_acceptance.py"
+      ],
+      "fail_to_pass": [
+        "tests/test_booleans.py::test_false_text_becomes_false",
+        "hidden_tests/test_acceptance.py::test_contract",
+        "hidden_tests/test_acceptance.py::test_normalized_text"
+      ],
+      "pass_to_pass": [
+        "hidden_tests/test_acceptance.py::test_preserved"
+      ],
+      "allowed_source_paths": [
+        "src/booleans.py"
+      ],
+      "timeout_seconds": 30
+    },
+    {
+      "id": "case_15",
+      "revision": 2,
+      "suite": "regression",
+      "split": "dev",
+      "source_kind": "synthetic",
+      "origin": {
+        "description": "Original PyRepair hand-written regression case; external acceptance v2",
+        "review_collection": "review-hard-v1",
+        "note": "New independent acceptance; original public task unchanged."
+      },
+      "buggy_path": "cases/case_15",
+      "public_description_path": "eval_descriptions/case_15.md",
+      "private_path": "review_cases_hard_v1/private/case_15",
+      "visible_tests": [
+        "tests/test_money.py"
+      ],
+      "hidden_tests": [
+        "hidden_tests/test_acceptance.py"
+      ],
+      "fail_to_pass": [
+        "tests/test_money.py::test_fractional_dollars_keep_cents",
+        "hidden_tests/test_acceptance.py::test_contract",
+        "hidden_tests/test_acceptance.py::test_exact_cents_independent_of_decimal_context[fraction-prec2]",
+        "hidden_tests/test_acceptance.py::test_exact_cents_independent_of_decimal_context[fraction-prec28]",
+        "hidden_tests/test_acceptance.py::test_exact_cents_independent_of_decimal_context[fraction-prec64]",
+        "hidden_tests/test_acceptance.py::test_exact_cents_independent_of_decimal_context[small-prec2]",
+        "hidden_tests/test_acceptance.py::test_exact_cents_independent_of_decimal_context[small-prec28]",
+        "hidden_tests/test_acceptance.py::test_exact_cents_independent_of_decimal_context[small-prec64]",
+        "hidden_tests/test_acceptance.py::test_exact_cents_independent_of_decimal_context[large-prec2]",
+        "hidden_tests/test_acceptance.py::test_exact_cents_independent_of_decimal_context[large-prec28]",
+        "hidden_tests/test_acceptance.py::test_exact_cents_independent_of_decimal_context[large-prec64]",
+        "hidden_tests/test_acceptance.py::test_exact_cents_independent_of_decimal_context[long-prec2]",
+        "hidden_tests/test_acceptance.py::test_exact_cents_independent_of_decimal_context[long-prec28]",
+        "hidden_tests/test_acceptance.py::test_exact_cents_independent_of_decimal_context[long-prec64]",
+        "hidden_tests/test_acceptance.py::test_exact_cents_independent_of_decimal_context[long_nines-prec2]",
+        "hidden_tests/test_acceptance.py::test_exact_cents_independent_of_decimal_context[long_nines-prec28]",
+        "hidden_tests/test_acceptance.py::test_exact_cents_independent_of_decimal_context[long_nines-prec64]"
+      ],
+      "pass_to_pass": [
+        "hidden_tests/test_acceptance.py::test_preserved",
+        "hidden_tests/test_acceptance.py::test_exact_cents_independent_of_decimal_context[zero-prec2]",
+        "hidden_tests/test_acceptance.py::test_exact_cents_independent_of_decimal_context[zero-prec28]",
+        "hidden_tests/test_acceptance.py::test_exact_cents_independent_of_decimal_context[zero-prec64]"
+      ],
+      "allowed_source_paths": [
+        "src/money.py"
+      ],
+      "timeout_seconds": 30
+    },
+    {
+      "id": "multi_orders",
+      "revision": 2,
+      "suite": "capability",
+      "split": "dev",
+      "source_kind": "synthetic",
+      "origin": {
+        "description": "Hand-written multi-module pilot, not a real open-source defect",
+        "review_collection": "review-hard-v1",
+        "note": "New independent acceptance; original public task unchanged."
+      },
+      "buggy_path": "eval_cases/multi_orders",
+      "public_description_path": "eval_descriptions/multi_orders.md",
+      "private_path": "review_cases_hard_v1/private/multi_orders",
+      "visible_tests": [
+        "tests/test_public.py"
+      ],
+      "hidden_tests": [
+        "hidden_tests/test_acceptance.py"
+      ],
+      "fail_to_pass": [
+        "tests/test_public.py::test_order",
+        "hidden_tests/test_acceptance.py::test_contract",
+        "hidden_tests/test_acceptance.py::test_total_rounding",
+        "hidden_tests/test_acceptance.py::test_public_helpers"
+      ],
+      "pass_to_pass": [
+        "hidden_tests/test_acceptance.py::test_preserved"
+      ],
+      "allowed_source_paths": [
+        "src/pricing.py",
+        "src/discounts.py",
+        "src/service.py"
+      ],
+      "timeout_seconds": 30
+    },
+    {
+      "id": "multi_inventory",
+      "revision": 2,
+      "suite": "capability",
+      "split": "dev",
+      "source_kind": "synthetic",
+      "origin": {
+        "description": "Hand-written multi-module pilot, not a real open-source defect",
+        "review_collection": "review-hard-v1",
+        "note": "New independent acceptance; original public task unchanged."
+      },
+      "buggy_path": "eval_cases/multi_inventory",
+      "public_description_path": "eval_descriptions/multi_inventory.md",
+      "private_path": "review_cases_hard_v1/private/multi_inventory",
+      "visible_tests": [
+        "tests/test_public.py"
+      ],
+      "hidden_tests": [
+        "hidden_tests/test_acceptance.py"
+      ],
+      "fail_to_pass": [
+        "tests/test_public.py::test_order",
+        "hidden_tests/test_acceptance.py::test_contract",
+        "hidden_tests/test_acceptance.py::test_exact_stock",
+        "hidden_tests/test_acceptance.py::test_invalid_quantity_preserves_state[fraction]",
+        "hidden_tests/test_acceptance.py::test_invalid_quantity_preserves_state[text]"
+      ],
+      "pass_to_pass": [
+        "hidden_tests/test_acceptance.py::test_preserved",
+        "hidden_tests/test_acceptance.py::test_invalid_quantity_preserves_state[zero]",
+        "hidden_tests/test_acceptance.py::test_invalid_quantity_preserves_state[negative]"
+      ],
+      "allowed_source_paths": [
+        "src/warehouse.py",
+        "src/reservations.py"
+      ],
+      "timeout_seconds": 30
+    },
+    {
+      "id": "multi_time",
+      "revision": 2,
+      "suite": "capability",
+      "split": "dev",
+      "source_kind": "synthetic",
+      "origin": {
+        "description": "Hand-written multi-module pilot, not a real open-source defect",
+        "review_collection": "review-hard-v1",
+        "note": "New independent acceptance; original public task unchanged."
+      },
+      "buggy_path": "eval_cases/multi_time",
+      "public_description_path": "eval_descriptions/multi_time.md",
+      "private_path": "review_cases_hard_v1/private/multi_time",
+      "visible_tests": [
+        "tests/test_public.py"
+      ],
+      "hidden_tests": [
+        "hidden_tests/test_acceptance.py"
+      ],
+      "fail_to_pass": [
+        "tests/test_public.py::test_order",
+        "hidden_tests/test_acceptance.py::test_contract",
+        "hidden_tests/test_acceptance.py::test_parser_returns_utc",
+        "hidden_tests/test_acceptance.py::test_fractional_seconds"
+      ],
+      "pass_to_pass": [
+        "hidden_tests/test_acceptance.py::test_preserved"
+      ],
+      "allowed_source_paths": [
+        "src/parsing.py",
+        "src/formatting.py",
+        "src/service.py"
+      ],
+      "timeout_seconds": 30
+    }
+  ]
+}
