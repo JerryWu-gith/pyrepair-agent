@@ -1,0 +1,82 @@
+{
+  "version": 2,
+  "cases": [
+    {
+      "id": "config_merge",
+      "revision": 1,
+      "suite": "capability",
+      "split": "dev",
+      "source_kind": "synthetic",
+      "origin": {
+        "description": "Self-authored goldset50 coverage case; not an upstream defect",
+        "scope": "Recursive configuration merge with input/output mutable-alias isolation and falsey replacement",
+        "mutant": "Explicitly artificial incomplete calibration patch, not a model-generated repair"
+      },
+      "buggy_path": "eval_cases/goldset50/config_merge",
+      "public_description_path": "eval_descriptions/goldset50/config_merge.md",
+      "private_path": "eval_private/goldset50/config_merge",
+      "visible_tests": [
+        "tests/test_public.py"
+      ],
+      "hidden_tests": [
+        "hidden_tests/test_acceptance.py"
+      ],
+      "fail_to_pass": [
+        "tests/test_public.py::test_nested_defaults_are_not_mutated",
+        "hidden_tests/test_acceptance.py::test_inherited_containers_are_isolated_in_both_directions",
+        "hidden_tests/test_acceptance.py::test_override_containers_are_isolated_in_both_directions",
+        "hidden_tests/test_acceptance.py::test_falsey_overrides_replace_values_without_fallback",
+        "hidden_tests/test_acceptance.py::test_empty_dictionary_replaces_scalar_value"
+      ],
+      "pass_to_pass": [
+        "tests/test_public.py::test_nonempty_values_and_unmentioned_keys_are_preserved",
+        "hidden_tests/test_acceptance.py::test_recursive_values_lists_and_type_replacement_are_preserved",
+        "hidden_tests/test_acceptance.py::test_empty_dictionary_merges_and_empty_inputs_are_preserved"
+      ],
+      "allowed_source_paths": [
+        "src/config_merge.py"
+      ],
+      "timeout_seconds": 30
+    },
+    {
+      "id": "multi_transfer",
+      "revision": 1,
+      "suite": "capability",
+      "split": "dev",
+      "source_kind": "synthetic",
+      "origin": {
+        "description": "Self-authored goldset50 coverage case; not an upstream defect",
+        "scope": "Transactional integer-cent transfer with validation-before-mutation and successful-request idempotency",
+        "mutant": "Explicitly artificial incomplete calibration patch, not a model-generated repair"
+      },
+      "buggy_path": "eval_cases/goldset50/multi_transfer",
+      "public_description_path": "eval_descriptions/goldset50/multi_transfer.md",
+      "private_path": "eval_private/goldset50/multi_transfer",
+      "visible_tests": [
+        "tests/test_public.py"
+      ],
+      "hidden_tests": [
+        "hidden_tests/test_acceptance.py"
+      ],
+      "fail_to_pass": [
+        "tests/test_public.py::test_missing_destination_does_not_debit_source",
+        "hidden_tests/test_acceptance.py::test_successful_request_replay_moves_funds_only_once",
+        "hidden_tests/test_acceptance.py::test_replay_after_source_is_empty_returns_original_receipt",
+        "hidden_tests/test_acceptance.py::test_conflicting_identifier_rejects_each_payload_change_unchanged",
+        "hidden_tests/test_acceptance.py::test_missing_destination_failure_allows_same_identifier_retry",
+        "hidden_tests/test_acceptance.py::test_same_account_is_rejected_without_moving_funds"
+      ],
+      "pass_to_pass": [
+        "tests/test_public.py::test_ordinary_transfer_returns_receipt_and_moves_integer_cents",
+        "hidden_tests/test_acceptance.py::test_invalid_amounts_missing_source_and_insufficient_funds_are_preserved",
+        "hidden_tests/test_acceptance.py::test_failed_request_does_not_reserve_identifier_or_payload",
+        "hidden_tests/test_acceptance.py::test_independent_identifiers_and_services_are_preserved"
+      ],
+      "allowed_source_paths": [
+        "src/ledger.py",
+        "src/service.py"
+      ],
+      "timeout_seconds": 30
+    }
+  ]
+}

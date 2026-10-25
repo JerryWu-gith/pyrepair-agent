@@ -1,0 +1,86 @@
+--- a/src/ledger.py
++++ b/src/ledger.py
+@@ -1,18 +1,30 @@
+-"""Integer-cent account balances for an in-memory transfer service."""
+-
+-
+-class Ledger:
+-    def __init__(self, balances):
+-        self.balances = dict(balances)
+-
+-    def debit(self, account, amount):
+-        if type(amount) is not int or amount <= 0:
+-            raise ValueError("amount must be positive integer cents")
+-        if account not in self.balances:
+-            raise KeyError(account)
+-        if self.balances[account] < amount:
+-            raise ValueError("insufficient funds")
+-        self.balances[account] -= amount
+-
+-    def credit(self, account, amount):
+-        self.balances[account] += amount
++"""Integer-cent account balances for an in-memory transfer service."""
++
++
++class Ledger:
++    def __init__(self, balances):
++        self.balances = dict(balances)
++
++    def debit(self, account, amount):
++        if type(amount) is not int or amount <= 0:
++            raise ValueError("amount must be positive integer cents")
++        if account not in self.balances:
++            raise KeyError(account)
++        if self.balances[account] < amount:
++            raise ValueError("insufficient funds")
++        self.balances[account] -= amount
++
++    def credit(self, account, amount):
++        self.balances[account] += amount
++
++    def validate_transfer(self, source, destination, amount):
++        if type(amount) is not int or amount <= 0:
++            raise ValueError("amount must be positive integer cents")
++        if source == destination:
++            raise ValueError("accounts must be distinct")
++        if source not in self.balances:
++            raise KeyError(source)
++        if destination not in self.balances:
++            raise KeyError(destination)
++        if self.balances[source] < amount:
++            raise ValueError("insufficient funds")
+--- a/src/service.py
++++ b/src/service.py
+@@ -1,11 +1,21 @@
+-"""Coordinate ledger operations and return transfer receipts."""
+-
+-
+-class TransferService:
+-    def __init__(self, ledger):
+-        self.ledger = ledger
+-
+-    def transfer(self, request_id, source, destination, amount):
+-        self.ledger.debit(source, amount)
+-        self.ledger.credit(destination, amount)
+-        return (request_id, source, destination, amount)
++"""Coordinate ledger operations and return transfer receipts."""
++
++
++class TransferService:
++    def __init__(self, ledger):
++        self.ledger = ledger
++        self._completed = {}
++
++    def transfer(self, request_id, source, destination, amount):
++        payload = (source, destination, amount)
++        if request_id in self._completed:
++            previous, receipt = self._completed[request_id]
++            if previous != payload or type(amount) is not int:
++                raise ValueError("request ID already used for a different payload")
++            return receipt
++        self.ledger.validate_transfer(source, destination, amount)
++        self.ledger.debit(source, amount)
++        self.ledger.credit(destination, amount)
++        receipt = (request_id, source, destination, amount)
++        self._completed[request_id] = (payload, receipt)
++        return receipt

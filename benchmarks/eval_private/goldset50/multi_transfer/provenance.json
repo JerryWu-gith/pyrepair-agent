@@ -1,0 +1,8 @@
+{
+  "source_kind": "synthetic",
+  "authoring": "New self-authored PyRepair evaluation data. No external repository code or issue.",
+  "scope": "In-memory integer-cent ledger; prevalidation, idempotent success, retry after failed request.",
+  "reference": "Production-only complete contract implementation, written after observing real buggy assertion failures.",
+  "wrong_patch": "Explicitly artificial incomplete patch: validates all transfer inputs before mutation but does not remember successful request IDs.",
+  "host_execution": "Only these owned synthetic sources may execute on host; upstream code is outside scope."
+}
