@@ -5,6 +5,7 @@ from __future__ import annotations
 import copy
 import os
 from pathlib import Path
+from time import monotonic
 
 from .cases import contained
 from .comparison_budget import CallBudget, read_usage, write_new
@@ -19,9 +20,13 @@ from .live_plan import absolute_path, describe_plan, public_job, validate_author
 from .worker_supervisor import WorkerError, run_worker
 
 
-def inspect_execution(pack_path, cases, output, mode, call_limit):
-    pack = verify_pack(absolute_path(pack_path), cases)
-    plan = describe_plan(pack_path, pack, output, mode, call_limit)
+def inspect_execution(
+    pack_path, cases, output, mode, call_limit, *, pack_verifier=None, plan_describer=None
+):
+    verifier = verify_pack if pack_verifier is None else pack_verifier
+    describer = describe_plan if plan_describer is None else plan_describer
+    pack = verifier(absolute_path(pack_path), cases)
+    plan = describer(pack_path, pack, output, mode, call_limit)
     destination = absolute_path(output)
     sources = [Path(plan["environment"]["lock_path"])]
     for case in cases:
@@ -74,10 +79,23 @@ def execute_comparison(
     resume=False,
     offline_executor=None,
     credential_getter=None,
+    pack_verifier=None,
+    plan_describer=None,
+    job_builder=None,
 ):
-    plan = inspect_execution(pack_path, cases, output, mode, call_limit)
+    verifier = verify_pack if pack_verifier is None else pack_verifier
+    builder = public_job if job_builder is None else job_builder
+    plan = inspect_execution(
+        pack_path,
+        cases,
+        output,
+        mode,
+        call_limit,
+        pack_verifier=verifier,
+        plan_describer=plan_describer,
+    )
     validate_authorization(authorization, plan)
-    pack = verify_pack(absolute_path(pack_path), cases)
+    pack = verifier(absolute_path(pack_path), cases)
     if pack["identity_hash"] != plan["pack_hash"]:
         raise ValueError("frozen pack no longer matches execution authorization")
     output = absolute_path(output)
@@ -105,9 +123,9 @@ def execute_comparison(
     runner = DockerTestRunner(Path(plan["environment"]["lock_path"]))
 
     def executor(slot, folder):
-        if digest(verify_pack(absolute_path(pack_path), cases)) != digest(pack):
+        if digest(verifier(absolute_path(pack_path), cases)) != digest(pack):
             raise ValueError("frozen comparison changed before worker execution")
-        job = public_job(pack_path, pack, slot, folder, quota, call_limit)
+        job = builder(pack_path, pack, slot, folder, quota, call_limit)
         if offline_executor is not None:
             return offline_executor(job)
         key = (credential_getter or _credential)()  # Only new authorized slots need a key.
@@ -117,13 +135,19 @@ def execute_comparison(
         entry = next(e for e in pack["identity"]["cases"] if e["id"] == slot["case_id"])
         public = contained(absolute_path(pack_path), entry["public"])
         nodes = read_json(absolute_path(pack_path) / "control" / public.name / "collection.json")
-        return grade_layered(
+        fresh_grading = not folder.exists()
+        started = monotonic()
+        grade = grade_layered(
             by_id[slot["case_id"]],
             candidate["patch"],
             folder,
             test_runner=runner,
             expected_nodes=nodes["expected_nodes"],
         )
+        duration = monotonic() - started
+        if fresh_grading and not (folder / "grading-time.json").exists():
+            write_new(folder / "grading-time.json", {"duration_seconds": duration})
+        return grade
 
     records = run_slots(selected, output, executor, grader)
     summary = summarize_comparison(selected, records, usage=read_usage(quota), execution_mode=mode)

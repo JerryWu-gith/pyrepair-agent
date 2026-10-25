@@ -139,6 +139,15 @@ def public_job(pack_path, pack, slot, folder, quota, call_limit):
 def validate_job(job):
     """Validate the entire public capability before any provider can be constructed."""
     if (
+        isinstance(job, dict)
+        and type(job.get("version")) is int
+        and job["version"] == 2
+        and job.get("profile") == "goldset50-r1"
+    ):
+        from .goldset_jobs import validate_job as validate_goldset_job
+
+        return validate_goldset_job(job)
+    if (
         not isinstance(job, dict)
         or set(job)
         != {
