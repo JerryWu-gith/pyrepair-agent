@@ -2,6 +2,8 @@
 
 日期：2026-10-25。**当前是来源登记完成，不是三十题gold set已经验收完成。** 已核对合并PR、固定修复提交及第一父版本；没有运行新增任务的Docker预检或DeepSeek评测。
 
+最新进展：三十份生产参考补丁和五十五个去重源码版本已准备并独立复核，见 [源码与参考准备记录](opensource-reference-preparation.md)。文档链接经用户批准单独留证，不创建或跟随。此进展不等于公开/隐藏验收资产已完成或模型通过。
+
 依据 [统一五十题设计](superpowers/specs/2026-10-25-unified-goldset50-design.md) 与 [本阶段实施计划](superpowers/plans/2026-10-25-unified-goldset-sources.md)。机器可读来源见 [opensource_catalog30.json](../benchmarks/opensource_catalog30.json)，检查入口见 [inspect_source_catalog.py](../benchmarks/inspect_source_catalog.py)。它不是旧运行器可直接执行的任务manifest。
 
 ## 1. 数量和用途

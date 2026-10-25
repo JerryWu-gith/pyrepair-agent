@@ -45,3 +45,21 @@
 - 提交粒度：来源校验、清单和只读入口共享同一测试文件，作为一个自洽来源登记交付提交，避免中间提交引用尚未入库的清单或CLI。没有扩大到资产/模型执行。
 - 当前结论：来源目录单元完成；新增二十八题的源码字节、许可、容器环境和行为验收尚未完成。没有新的DeepSeek请求、Docker执行、推送或PR。
 - 下一步：准备固定源码归档、许可及参考生产补丁，再建立公开复现、隐藏边界与不完整补丁；三十题完成后再补两道自建题，五十题全部冻结后才做统一模型评测。
+
+## 2026-10-25 / 步骤 4：三十题固定源码、许可和生产参考补丁
+
+- 目标/边界：执行 [参考资产计划](superpowers/plans/2026-10-25-catalog-reference-assets.md)，只下载和核验数据，不运行上游代码、Docker或模型。Agent、pyproject、旧任务、旧严格归档读取器和历史成绩不改。
+- 来源：按30题目录去重后有55个repo/commit。固定commit/tree JSON经已连接GitHub只读接口取得，归档来自受限codeload HTTPS。元数据镜像不保存认证信息，来源可追溯但不是签名证明，也不声称抵抗恶意宿主全面重写证据。
+- 新工具：`catalog_source_cache.py`核验和复用版本；`catalog_references.py`生成纯生产参考补丁并提供显式resume/离线verify；CLI `prepare_catalog_references.py`无模型或上游执行参数。
+- TDD：源码缓存先缺实现失败，再12项通过；批次测试最初引用了错误的顶层测试模块，核对现有tests包后改用`tests.test_catalog_source_cache`，正常观察到两个缺实现断言失败；实现后23项通过。
+- Windows问题：部分测试在目录rename报间歇WinError5，提权和缩短路径后仍出现，具体锁定进程未确认。用自有文件系统边界反例确定不能依赖目录rename，再改为验证后独占新目录、最后写完成标记；不降低Git/ZIP校验，不改ACL。没有标记的目录不能复用，不自动删除不完整数据。
+- 首轮实际准备：22题完成，遇到python-dotenv `docs/changelog.md` 的归档符号链接被旧安全规则拒绝。run报告保存source_error；未伪装成功或静默重试。首轮失败ZIP只在暂存目录，未另存永久归档，不声称保存了其原始ZIP。
+- 用户决定：明确批准保留六道python-dotenv候选，仅对文档链接作受限元数据处理。新增`catalog_document_links.py`，旧`opensource_archive.py`和`opensource_assets.py`未改。
+- 链接边界：只允许docs/下md/rst/txt文件指向内部普通文档，原始链接目标字节参与Git blob、大小和SHA256核验；生产、测试、越界、绝对、悬空和链接链拒绝；source中没有实际链接。原ZIP/原tree保留，归一化只在内存，离线verify不写暂存文件。
+- 审查修复：只读审查提出EOF缺换行可能生成无法应用的补丁。主代理构造具体反例，断言失败；新参考入口补标准EOF marker，旧helper不改。实际已准备22题没有缺EOF换行。新文档链接/EOF反例初为2 failed，修复后通过；只读验证不应创建临时目录另有RED/GREEN回归。最终受限链接审查无新增P1/P2。
+- 继续准备：按原目录身份显式resume，先重验并复用22题缓存，再完成余下任务。两份run报告保留；旧失败report SHA256仍为`0c325128403482635f7eb99d8c02059a3bf4524a7405dd04ba03e49ec5f9e600`，无修改。
+- 实际结果：30/30参考记录、55个来源版本；跨版本6044个普通文件、55,400,734字节；44条文档链接元数据；7份不同许可内容。普通文件集合、Git blob、归档摘要、许可和参考补丁绑定均已核验；不把这些数字当成模型性能。
+- 独立验证：`--verify-only`退出0、30份reference和55份版本通过；Git只读`apply --check --no-index`全部30份补丁通过；定向工具/旧保护回归 **226 passed，0 failed，0 errors**，7.32秒；Ruff和格式检查通过。没有重跑全部历史长实验。
+- 证据根：`D:/Project/PyRepair Agent/tmp/catalog30-reference-20261025-2c26859/`；初轮/继续工具摘要、元数据、缓存和两份run报告均在；JUnit为`D:/Project/PyRepair Agent/tmp/r-ff4ed8b1/focused.xml`。规范目录身份SHA256为`124ea139447523fe1b4836bde9c3a82f176a4db11ef3ada93b29e0bfb56ae3e4`。
+- 当前结论：`references_prepared`，不是`calibrated`，ready_for_model_evaluation=false，model_calls=0，upstream_code_executed=false。完整源码和原始准备证据只留本地，不默认提交或发布。
+- 遗留：新增题的公开复现、隐藏边界、回归范围、不完整补丁、src导入和Docker环境校准仍需实施；许可分发义务未在本步宣布通过。完成这些后再补两道自建，冻结五十题，再统一DeepSeek评测。
