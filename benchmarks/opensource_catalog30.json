@@ -1,0 +1,780 @@
+{
+  "version": 1,
+  "kind": "pyrepair-opensource-source-catalog",
+  "stage": "provenance_checked",
+  "agent_baseline_commit": "7c9508e63ff3a133e7599b3a2ca439e935f10295",
+  "expected_count": 30,
+  "minimum_repositories": 5,
+  "entries": [
+    {
+      "id": "os_more_seekable_1269",
+      "revision": 2,
+      "source_kind": "opensource",
+      "split": "dev",
+      "repository": "more-itertools/more-itertools",
+      "pull_request": 1269,
+      "title": "Issue 1268: seekable.peek/bool no longer drop items when maxlen is 0",
+      "buggy_commit": "1da45ae4b61a832ed080f08a8833784aad0a9534",
+      "fixed_commit": "b5e3886a37209bb880f17d82fbf4ba00ece0e41e",
+      "fixed_parents": [
+        "1da45ae4b61a832ed080f08a8833784aad0a9534",
+        "262dbb9805710cf31140f7566037e9f6178b6c28"
+      ],
+      "merged_at": "2026-09-21T16:16:23Z",
+      "source_root": "more_itertools",
+      "reference_source_paths": [
+        "more_itertools/more.py"
+      ],
+      "upstream_test_paths": [
+        "tests/test_more.py"
+      ],
+      "upstream_ai_assistance": "not established from inspected PR and commit information",
+      "legacy_manifest": "manifest_opensource_v3.json"
+    },
+    {
+      "id": "os_boltons_addlist_458",
+      "revision": 2,
+      "source_kind": "opensource",
+      "split": "dev",
+      "repository": "mahmoud/boltons",
+      "pull_request": 458,
+      "title": "Fix addlist() dropping values from a one-shot iterable",
+      "buggy_commit": "d45cc414e33aa4e08a73e0993574df4397e2e9db",
+      "fixed_commit": "a1ea1030ed85137e999c0bd9b11d16368d3ab241",
+      "fixed_parents": [
+        "d45cc414e33aa4e08a73e0993574df4397e2e9db"
+      ],
+      "merged_at": "2026-09-07T08:41:34Z",
+      "source_root": "boltons",
+      "reference_source_paths": [
+        "boltons/dictutils.py",
+        "boltons/urlutils.py"
+      ],
+      "upstream_test_paths": [
+        "tests/test_dictutils.py"
+      ],
+      "upstream_ai_assistance": "Upstream PR discloses AI assistance; retained from the previously inspected source registry.",
+      "legacy_manifest": "manifest_opensource_v3.json"
+    },
+    {
+      "id": "os_packaging_hash_1232",
+      "revision": 1,
+      "source_kind": "opensource",
+      "split": "holdout",
+      "repository": "pypa/packaging",
+      "pull_request": 1232,
+      "title": "fix(requirements): make Requirement.__hash__ consistent with __eq__ for trailing-zero-equivalent specifiers",
+      "buggy_commit": "664f049980f1873c458de72a449003b83173f445",
+      "fixed_commit": "d8e08df11bfa50e987375546eda1f0ee3f27bd41",
+      "fixed_parents": [
+        "664f049980f1873c458de72a449003b83173f445"
+      ],
+      "merged_at": "2026-06-15T23:49:12Z",
+      "source_root": "src/packaging",
+      "reference_source_paths": [
+        "src/packaging/requirements.py"
+      ],
+      "upstream_test_paths": [
+        "tests/test_requirements.py"
+      ],
+      "upstream_ai_assistance": "not established from inspected PR and commit information",
+      "legacy_manifest": null
+    },
+    {
+      "id": "os_packaging_quotes_1213",
+      "revision": 1,
+      "source_kind": "opensource",
+      "split": "holdout",
+      "repository": "pypa/packaging",
+      "pull_request": 1213,
+      "title": "fix: preserve marker quote semantics when serializing values",
+      "buggy_commit": "2497782b2bb03812d2a12ae882a4390c61ec5061",
+      "fixed_commit": "5b583e309996a085ad3b5b045f3bf50a09c11b58",
+      "fixed_parents": [
+        "2497782b2bb03812d2a12ae882a4390c61ec5061"
+      ],
+      "merged_at": "2026-07-20T04:50:46Z",
+      "source_root": "src/packaging",
+      "reference_source_paths": [
+        "src/packaging/_parser.py"
+      ],
+      "upstream_test_paths": [
+        "tests/test_markers.py",
+        "tests/test_requirements.py"
+      ],
+      "upstream_ai_assistance": "not established from inspected PR and commit information",
+      "legacy_manifest": null
+    },
+    {
+      "id": "os_packaging_empty_tags_1234",
+      "revision": 1,
+      "source_kind": "opensource",
+      "split": "holdout",
+      "repository": "pypa/packaging",
+      "pull_request": 1234,
+      "title": "fix(utils): reject empty tag components in parse_wheel_filename/parse_tag (#577)",
+      "buggy_commit": "ffb76f30eb15753142d6c4b95c693f3e909cf135",
+      "fixed_commit": "c5b253b24ba5d4c242a73ff19b02ef0833ba5859",
+      "fixed_parents": [
+        "ffb76f30eb15753142d6c4b95c693f3e909cf135"
+      ],
+      "merged_at": "2026-06-08T14:50:17Z",
+      "source_root": "src/packaging",
+      "reference_source_paths": [
+        "src/packaging/tags.py",
+        "src/packaging/utils.py"
+      ],
+      "upstream_test_paths": [
+        "tests/test_tags.py",
+        "tests/test_utils.py"
+      ],
+      "upstream_ai_assistance": "not established from inspected PR and commit information",
+      "legacy_manifest": null
+    },
+    {
+      "id": "os_packaging_tag_fields_1238",
+      "revision": 1,
+      "source_kind": "opensource",
+      "split": "holdout",
+      "repository": "pypa/packaging",
+      "pull_request": 1238,
+      "title": "fix(tags): raise InvalidTag for malformed tag field counts",
+      "buggy_commit": "a33b2941bf334823ab48b059611158d37da5846e",
+      "fixed_commit": "f0620a997147fefd6844af9745c7bf28b43cce29",
+      "fixed_parents": [
+        "a33b2941bf334823ab48b059611158d37da5846e"
+      ],
+      "merged_at": "2026-07-08T01:22:39Z",
+      "source_root": "src/packaging",
+      "reference_source_paths": [
+        "src/packaging/tags.py"
+      ],
+      "upstream_test_paths": [
+        "tests/test_tags.py"
+      ],
+      "upstream_ai_assistance": "not established from inspected PR and commit information",
+      "legacy_manifest": null
+    },
+    {
+      "id": "os_packaging_file_scheme_1240",
+      "revision": 1,
+      "source_kind": "opensource",
+      "split": "holdout",
+      "repository": "pypa/packaging",
+      "pull_request": 1240,
+      "title": "fix(direct_url): parse URL scheme case-insensitively when checking for file URLs",
+      "buggy_commit": "0d799f1ae4ae15be8636ffb514dc014aa81c0b8e",
+      "fixed_commit": "e80f70f8b164ee4b0ef7634aafe8c6cc4ce00ca3",
+      "fixed_parents": [
+        "0d799f1ae4ae15be8636ffb514dc014aa81c0b8e"
+      ],
+      "merged_at": "2026-06-24T11:58:45Z",
+      "source_root": "src/packaging",
+      "reference_source_paths": [
+        "src/packaging/direct_url.py"
+      ],
+      "upstream_test_paths": [
+        "tests/test_direct_url.py"
+      ],
+      "upstream_ai_assistance": "PR disclosure: :robot: _AI text below_ :robot: 🤖 Generated with [Claude Code](https://claude.com/claude-code)",
+      "legacy_manifest": null
+    },
+    {
+      "id": "os_packaging_bool_int_1244",
+      "revision": 1,
+      "source_kind": "opensource",
+      "split": "holdout",
+      "repository": "pypa/packaging",
+      "pull_request": 1244,
+      "title": "fix(pylock): reject bools where TOML integers are expected",
+      "buggy_commit": "c34f81d244cbbc679d2b5a238f485afa214385ae",
+      "fixed_commit": "9a11fba3d53215dc2ff08d8e9d0d5780c08fbe8f",
+      "fixed_parents": [
+        "c34f81d244cbbc679d2b5a238f485afa214385ae"
+      ],
+      "merged_at": "2026-07-07T13:00:08Z",
+      "source_root": "src/packaging",
+      "reference_source_paths": [
+        "src/packaging/pylock.py"
+      ],
+      "upstream_test_paths": [
+        "tests/test_pylock.py"
+      ],
+      "upstream_ai_assistance": "PR disclosure: :robot: _AI text below_ :robot: 🤖 Generated with [Claude Code](https://claude.com/claude-code)",
+      "legacy_manifest": null
+    },
+    {
+      "id": "os_packaging_nested_extra_1246",
+      "revision": 1,
+      "source_kind": "opensource",
+      "split": "holdout",
+      "repository": "pypa/packaging",
+      "pull_request": 1246,
+      "title": "fix: normalize nested extra marker values",
+      "buggy_commit": "349abfad0688f42eb835ed8a10380d6cbf6940e7",
+      "fixed_commit": "07265129295b4b95b9143b50e3ce4709f31a8c49",
+      "fixed_parents": [
+        "349abfad0688f42eb835ed8a10380d6cbf6940e7"
+      ],
+      "merged_at": "2026-06-16T12:29:32Z",
+      "source_root": "src/packaging",
+      "reference_source_paths": [
+        "src/packaging/markers.py"
+      ],
+      "upstream_test_paths": [
+        "tests/test_markers.py"
+      ],
+      "upstream_ai_assistance": "not established from inspected PR and commit information",
+      "legacy_manifest": null
+    },
+    {
+      "id": "os_packaging_literal_errors_1249",
+      "revision": 1,
+      "source_kind": "opensource",
+      "split": "holdout",
+      "repository": "pypa/packaging",
+      "pull_request": 1249,
+      "title": "fix(markers): wrap malformed quoted strings as public parse errors",
+      "buggy_commit": "adc6f21199435de1903585f98c0277af66ec02f0",
+      "fixed_commit": "6115033aa6469c0d0f78e53be5cc47b1fbd4b3e7",
+      "fixed_parents": [
+        "adc6f21199435de1903585f98c0277af66ec02f0"
+      ],
+      "merged_at": "2026-06-19T14:15:40Z",
+      "source_root": "src/packaging",
+      "reference_source_paths": [
+        "src/packaging/_parser.py"
+      ],
+      "upstream_test_paths": [
+        "tests/test_markers.py",
+        "tests/test_requirements.py"
+      ],
+      "upstream_ai_assistance": "not established from inspected PR and commit information",
+      "legacy_manifest": null
+    },
+    {
+      "id": "os_packaging_license_with_1266",
+      "revision": 1,
+      "source_kind": "opensource",
+      "split": "holdout",
+      "repository": "pypa/packaging",
+      "pull_request": 1266,
+      "title": "fix: reject more invalid license expression forms",
+      "buggy_commit": "b19df947aa03658c776e44c3005b9c860d5b5c8d",
+      "fixed_commit": "0cc1cc8eea11da73a3ae540b92c51255d7d1d690",
+      "fixed_parents": [
+        "b19df947aa03658c776e44c3005b9c860d5b5c8d"
+      ],
+      "merged_at": "2026-06-23T17:33:17Z",
+      "source_root": "src/packaging",
+      "reference_source_paths": [
+        "src/packaging/licenses/__init__.py"
+      ],
+      "upstream_test_paths": [
+        "tests/test_licenses.py",
+        "tests/test_metadata.py"
+      ],
+      "upstream_ai_assistance": "not established from inspected PR and commit information",
+      "legacy_manifest": null
+    },
+    {
+      "id": "os_packaging_missing_env_1276",
+      "revision": 1,
+      "source_kind": "opensource",
+      "split": "holdout",
+      "repository": "pypa/packaging",
+      "pull_request": 1276,
+      "title": "fix(markers): correct Marker.evaluate :raises: from docs (and subclass KeyError for backcompat)",
+      "buggy_commit": "d406cb4dd392d883beb8f25f83dd8f7179b6d504",
+      "fixed_commit": "b19df947aa03658c776e44c3005b9c860d5b5c8d",
+      "fixed_parents": [
+        "d406cb4dd392d883beb8f25f83dd8f7179b6d504"
+      ],
+      "merged_at": "2026-06-23T03:18:21Z",
+      "source_root": "src/packaging",
+      "reference_source_paths": [
+        "src/packaging/markers.py"
+      ],
+      "upstream_test_paths": [
+        "tests/test_markers.py"
+      ],
+      "upstream_ai_assistance": "not established from inspected PR and commit information",
+      "legacy_manifest": null
+    },
+    {
+      "id": "os_packaging_nested_group_1316",
+      "revision": 1,
+      "source_kind": "opensource",
+      "split": "holdout",
+      "repository": "pypa/packaging",
+      "pull_request": 1316,
+      "title": "fix(markers): keep parentheses of a nested group when serializing",
+      "buggy_commit": "c4fb81ff6eba16fdd24d50e9d9d002fdbece6dd4",
+      "fixed_commit": "0a85b41e24c9b55b83f05ae696d73e8294a5b094",
+      "fixed_parents": [
+        "c4fb81ff6eba16fdd24d50e9d9d002fdbece6dd4"
+      ],
+      "merged_at": "2026-07-06T12:42:47Z",
+      "source_root": "src/packaging",
+      "reference_source_paths": [
+        "src/packaging/markers.py"
+      ],
+      "upstream_test_paths": [
+        "tests/test_markers.py"
+      ],
+      "upstream_ai_assistance": "not established from inspected PR and commit information",
+      "legacy_manifest": null
+    },
+    {
+      "id": "os_packaging_invalid_spec_1332",
+      "revision": 1,
+      "source_kind": "opensource",
+      "split": "holdout",
+      "repository": "pypa/packaging",
+      "pull_request": 1332,
+      "title": "fix(requirements): raise InvalidRequirement for malformed specifier lists",
+      "buggy_commit": "9c652e4b4ced3c94f133a1b91c726023f0950b4f",
+      "fixed_commit": "fe18f139c5b3d73cd9fdd9b25f1eda1b6fd7ba15",
+      "fixed_parents": [
+        "9c652e4b4ced3c94f133a1b91c726023f0950b4f"
+      ],
+      "merged_at": "2026-07-20T16:53:22Z",
+      "source_root": "src/packaging",
+      "reference_source_paths": [
+        "src/packaging/requirements.py"
+      ],
+      "upstream_test_paths": [
+        "tests/test_requirements.py"
+      ],
+      "upstream_ai_assistance": "not established from inspected PR and commit information",
+      "legacy_manifest": null
+    },
+    {
+      "id": "os_click_flags_2930",
+      "revision": 1,
+      "source_kind": "opensource",
+      "split": "holdout",
+      "repository": "pallets/click",
+      "pull_request": 2930,
+      "title": "Fix flag value set when is_flag=True and type is provided",
+      "buggy_commit": "011b9f9d190c71310264e6c54bae6259f5e38a9f",
+      "fixed_commit": "884af5c20fdc95c9c7352df35c37273391464fb9",
+      "fixed_parents": [
+        "011b9f9d190c71310264e6c54bae6259f5e38a9f",
+        "4fd2fea0db423d242aedcae0a5f664efe0a93484"
+      ],
+      "merged_at": "2025-05-20T14:55:39Z",
+      "source_root": "src/click",
+      "reference_source_paths": [
+        "src/click/core.py"
+      ],
+      "upstream_test_paths": [
+        "tests/test_options.py"
+      ],
+      "upstream_ai_assistance": "not established from inspected PR and commit information",
+      "legacy_manifest": null
+    },
+    {
+      "id": "os_click_enum_default_3004",
+      "revision": 1,
+      "source_kind": "opensource",
+      "split": "holdout",
+      "repository": "pallets/click",
+      "pull_request": 3004,
+      "title": "Fix rendering of Enum choices' default",
+      "buggy_commit": "a1235aacb1be55dc66ddcfefbf64dec44b6ab54d",
+      "fixed_commit": "eaf33a957975e7d0943fad8d2b4b905b6bd98cb9",
+      "fixed_parents": [
+        "a1235aacb1be55dc66ddcfefbf64dec44b6ab54d",
+        "fe3677f85644434d67506ac92a3df6d08a96c764"
+      ],
+      "merged_at": "2025-07-22T07:30:29Z",
+      "source_root": "src/click",
+      "reference_source_paths": [
+        "src/click/core.py"
+      ],
+      "upstream_test_paths": [
+        "tests/test_options.py"
+      ],
+      "upstream_ai_assistance": "not established from inspected PR and commit information",
+      "legacy_manifest": null
+    },
+    {
+      "id": "os_click_env_hint_2972",
+      "revision": 1,
+      "source_kind": "opensource",
+      "split": "holdout",
+      "repository": "pallets/click",
+      "pull_request": 2972,
+      "title": "Don't include envvar in error hint when envvar not configured",
+      "buggy_commit": "c88f333de440c5066ff563f784a6561f4713cf78",
+      "fixed_commit": "0be2bd385064053bb75f92db317de128db729d52",
+      "fixed_parents": [
+        "c88f333de440c5066ff563f784a6561f4713cf78",
+        "d1f865142812584b9a1630106cce3f2309751e71"
+      ],
+      "merged_at": "2025-07-23T04:29:00Z",
+      "source_root": "src/click",
+      "reference_source_paths": [
+        "src/click/core.py"
+      ],
+      "upstream_test_paths": [
+        "tests/test_options.py"
+      ],
+      "upstream_ai_assistance": "not established from inspected PR and commit information",
+      "legacy_manifest": null
+    },
+    {
+      "id": "os_click_resource_exit_3058",
+      "revision": 1,
+      "source_kind": "opensource",
+      "split": "holdout",
+      "repository": "pallets/click",
+      "pull_request": 3058,
+      "title": "Forward exception information to resources registered in a context",
+      "buggy_commit": "16fe802a3f96c4c8fa3cd382f1a7577fda0c5321",
+      "fixed_commit": "36deba8a95a2585de1a2aa4475b7f054f52830ac",
+      "fixed_parents": [
+        "16fe802a3f96c4c8fa3cd382f1a7577fda0c5321",
+        "f2cae7ae997cd32311cab3dede4c2b89fe05e191"
+      ],
+      "merged_at": "2025-09-12T17:16:56Z",
+      "source_root": "src/click",
+      "reference_source_paths": [
+        "src/click/core.py"
+      ],
+      "upstream_test_paths": [
+        "tests/test_context.py"
+      ],
+      "upstream_ai_assistance": "not established from inspected PR and commit information",
+      "legacy_manifest": null
+    },
+    {
+      "id": "os_click_eof_2940",
+      "revision": 1,
+      "source_kind": "opensource",
+      "split": "holdout",
+      "repository": "pallets/click",
+      "pull_request": 2940,
+      "title": "testing/CliRunner: Fix regression related to EOF introduced in 262bdf0",
+      "buggy_commit": "36deba8a95a2585de1a2aa4475b7f054f52830ac",
+      "fixed_commit": "2a0e3ba907927ade6951d5732b775f11b54cb766",
+      "fixed_parents": [
+        "36deba8a95a2585de1a2aa4475b7f054f52830ac",
+        "e11a1efc3395e998a1521a0dc35672a799e78d30"
+      ],
+      "merged_at": "2025-09-13T04:36:16Z",
+      "source_root": "src/click",
+      "reference_source_paths": [
+        "src/click/testing.py"
+      ],
+      "upstream_test_paths": [
+        "tests/test_chain.py"
+      ],
+      "upstream_ai_assistance": "not established from inspected PR and commit information",
+      "legacy_manifest": null
+    },
+    {
+      "id": "os_click_zsh_colon_2846",
+      "revision": 1,
+      "source_kind": "opensource",
+      "split": "holdout",
+      "repository": "pallets/click",
+      "pull_request": 2846,
+      "title": "Fix Zsh completions with colons",
+      "buggy_commit": "565f36d5bc4a15d304337b749e113fb4477b1843",
+      "fixed_commit": "a1235aacb1be55dc66ddcfefbf64dec44b6ab54d",
+      "fixed_parents": [
+        "565f36d5bc4a15d304337b749e113fb4477b1843"
+      ],
+      "merged_at": "2025-07-21T19:35:04Z",
+      "source_root": "src/click",
+      "reference_source_paths": [
+        "src/click/shell_completion.py"
+      ],
+      "upstream_test_paths": [
+        "tests/test_shell_completion.py"
+      ],
+      "upstream_ai_assistance": "not established from inspected PR and commit information",
+      "legacy_manifest": null
+    },
+    {
+      "id": "os_click_progress_final_3769",
+      "revision": 1,
+      "source_kind": "opensource",
+      "split": "holdout",
+      "repository": "pallets/click",
+      "pull_request": 3769,
+      "title": "Settles progress bar on its final position",
+      "buggy_commit": "8b44edfff7d9a6c895fa804148c16b3a0bc9efb5",
+      "fixed_commit": "150d1071d69c5cdad7de78590013ffe56cf9e3bb",
+      "fixed_parents": [
+        "8b44edfff7d9a6c895fa804148c16b3a0bc9efb5",
+        "f316d5cb3aa89b57c14aee54da6ac9062ac5bec4"
+      ],
+      "merged_at": "2026-08-15T17:56:58Z",
+      "source_root": "src/click",
+      "reference_source_paths": [
+        "src/click/_termui_impl.py"
+      ],
+      "upstream_test_paths": [
+        "tests/test_termui.py"
+      ],
+      "upstream_ai_assistance": "not established from inspected PR and commit information",
+      "legacy_manifest": null
+    },
+    {
+      "id": "os_click_callable_flag_3225",
+      "revision": 1,
+      "source_kind": "opensource",
+      "split": "holdout",
+      "repository": "pallets/click",
+      "pull_request": 3225,
+      "title": "Fix callable ``flag_value`` being instantiated when used as a default",
+      "buggy_commit": "ae46cfd6bc997804893adc799589248eadcdbc29",
+      "fixed_commit": "5850ef97230f84c74d0234ab0f30f23b398a6eee",
+      "fixed_parents": [
+        "ae46cfd6bc997804893adc799589248eadcdbc29",
+        "546f2851f414b07413777ebcae89b2c21a685252"
+      ],
+      "merged_at": "2026-03-01T23:41:05Z",
+      "source_root": "src/click",
+      "reference_source_paths": [
+        "src/click/core.py"
+      ],
+      "upstream_test_paths": [
+        "tests/test_defaults.py",
+        "tests/test_options.py"
+      ],
+      "upstream_ai_assistance": "not established from inspected PR and commit information",
+      "legacy_manifest": null
+    },
+    {
+      "id": "os_dotenv_bom_640",
+      "revision": 1,
+      "source_kind": "opensource",
+      "split": "holdout",
+      "repository": "theskumar/python-dotenv",
+      "pull_request": 640,
+      "title": "fix: strip UTF-8 BOM from .env files",
+      "buggy_commit": "68ea2d10dd8e97e6dea67c32742085f27729e3fe",
+      "fixed_commit": "bca6644d9aedbe287b792b756b3ae3d650cd0d3a",
+      "fixed_parents": [
+        "68ea2d10dd8e97e6dea67c32742085f27729e3fe"
+      ],
+      "merged_at": "2026-04-19T19:39:11Z",
+      "source_root": "src/dotenv",
+      "reference_source_paths": [
+        "src/dotenv/parser.py"
+      ],
+      "upstream_test_paths": [
+        "tests/test_parser.py"
+      ],
+      "upstream_ai_assistance": "PR disclosure: 🤖 Generated with [Claude Code](https://claude.com/claude-code)",
+      "legacy_manifest": null
+    },
+    {
+      "id": "os_dotenv_backslash_680",
+      "revision": 1,
+      "source_kind": "opensource",
+      "split": "holdout",
+      "repository": "theskumar/python-dotenv",
+      "pull_request": 680,
+      "title": "fix: make values containing backslashes round-trip through set_key",
+      "buggy_commit": "751f8c148222e58aa173c83c4e5e6cfccb2cc124",
+      "fixed_commit": "f7b18d9c72d1abcc2ad4023424b84f5bee30d266",
+      "fixed_parents": [
+        "751f8c148222e58aa173c83c4e5e6cfccb2cc124"
+      ],
+      "merged_at": "2026-08-16T15:23:35Z",
+      "source_root": "src/dotenv",
+      "reference_source_paths": [
+        "src/dotenv/main.py",
+        "src/dotenv/parser.py"
+      ],
+      "upstream_test_paths": [
+        "tests/test_main.py",
+        "tests/test_parser.py"
+      ],
+      "upstream_ai_assistance": "PR disclosure: 🤖 Generated with [Claude Code](https://claude.com/claude-code)",
+      "legacy_manifest": null
+    },
+    {
+      "id": "os_dotenv_override_698",
+      "revision": 1,
+      "source_kind": "opensource",
+      "split": "holdout",
+      "repository": "theskumar/python-dotenv",
+      "pull_request": 698,
+      "title": "Fix variable expansion in dotenv run --no-override",
+      "buggy_commit": "a00cb2eed0704cd6d2071b2004c37e95ccc86ee5",
+      "fixed_commit": "e0310e5bb3f2b701b11bbc007ca0c82c1bd56f38",
+      "fixed_parents": [
+        "a00cb2eed0704cd6d2071b2004c37e95ccc86ee5"
+      ],
+      "merged_at": "2026-09-30T03:05:57Z",
+      "source_root": "src/dotenv",
+      "reference_source_paths": [
+        "src/dotenv/cli.py"
+      ],
+      "upstream_test_paths": [
+        "tests/test_cli.py"
+      ],
+      "upstream_ai_assistance": "not established from inspected PR and commit information",
+      "legacy_manifest": null
+    },
+    {
+      "id": "os_dotenv_empty_get_700",
+      "revision": 1,
+      "source_kind": "opensource",
+      "split": "holdout",
+      "repository": "theskumar/python-dotenv",
+      "pull_request": 700,
+      "title": "Fix dotenv get exiting with code 1 for empty string values",
+      "buggy_commit": "58f2d7c112235b347040bb5cb579d4ebc0a0ad91",
+      "fixed_commit": "f215c0274dc4c310e5ca5feb4c6bddade25ece21",
+      "fixed_parents": [
+        "58f2d7c112235b347040bb5cb579d4ebc0a0ad91"
+      ],
+      "merged_at": "2026-10-01T05:34:45Z",
+      "source_root": "src/dotenv",
+      "reference_source_paths": [
+        "src/dotenv/cli.py"
+      ],
+      "upstream_test_paths": [
+        "tests/test_cli.py"
+      ],
+      "upstream_ai_assistance": "not established from inspected PR and commit information",
+      "legacy_manifest": null
+    },
+    {
+      "id": "os_dotenv_missing_command_606",
+      "revision": 1,
+      "source_kind": "opensource",
+      "split": "holdout",
+      "repository": "theskumar/python-dotenv",
+      "pull_request": 606,
+      "title": "Fix handling of missing command by `dotenv run`",
+      "buggy_commit": "dc71adbd8105188602907f6653d3c58d113de554",
+      "fixed_commit": "da0c82054f1ec1e03d57356d49b0b9ad09eb4209",
+      "fixed_parents": [
+        "dc71adbd8105188602907f6653d3c58d113de554"
+      ],
+      "merged_at": "2026-03-02T05:21:15Z",
+      "source_root": "src/dotenv",
+      "reference_source_paths": [
+        "src/dotenv/cli.py"
+      ],
+      "upstream_test_paths": [
+        "tests/test_cli.py"
+      ],
+      "upstream_ai_assistance": "not established from inspected PR and commit information",
+      "legacy_manifest": null
+    },
+    {
+      "id": "os_dotenv_empty_cache_638",
+      "revision": 1,
+      "source_kind": "opensource",
+      "split": "holdout",
+      "repository": "theskumar/python-dotenv",
+      "pull_request": 638,
+      "title": "Fix caching for empty dotenv files",
+      "buggy_commit": "bca6644d9aedbe287b792b756b3ae3d650cd0d3a",
+      "fixed_commit": "3f0e3e0b461cf7127e2753efbdf896bdff31db2e",
+      "fixed_parents": [
+        "bca6644d9aedbe287b792b756b3ae3d650cd0d3a"
+      ],
+      "merged_at": "2026-05-08T14:27:37Z",
+      "source_root": "src/dotenv",
+      "reference_source_paths": [
+        "src/dotenv/main.py"
+      ],
+      "upstream_test_paths": [
+        "tests/test_main.py"
+      ],
+      "upstream_ai_assistance": "not established from inspected PR and commit information",
+      "legacy_manifest": null
+    },
+    {
+      "id": "os_more_bucket_validator_1309",
+      "revision": 1,
+      "source_kind": "opensource",
+      "split": "holdout",
+      "repository": "more-itertools/more-itertools",
+      "pull_request": 1309,
+      "title": "fix: honour a falsey validator in bucket (#1308)",
+      "buggy_commit": "1ea82a711c69f590054987b5cb194157f8ce8ac4",
+      "fixed_commit": "67fcf640477c78605580f5ee703a54c73c1e7a8a",
+      "fixed_parents": [
+        "1ea82a711c69f590054987b5cb194157f8ce8ac4"
+      ],
+      "merged_at": "2026-10-07T15:04:42Z",
+      "source_root": "more_itertools",
+      "reference_source_paths": [
+        "more_itertools/more.py"
+      ],
+      "upstream_test_paths": [
+        "tests/test_more.py"
+      ],
+      "upstream_ai_assistance": "not established from inspected PR and commit information",
+      "legacy_manifest": null
+    },
+    {
+      "id": "os_more_ichunked_sizes_1305",
+      "revision": 1,
+      "source_kind": "opensource",
+      "split": "holdout",
+      "repository": "more-itertools/more-itertools",
+      "pull_request": 1305,
+      "title": "Issue 1304: ichunked matches chunked for n=0 and negative n",
+      "buggy_commit": "790bb0bb2c03e7a07282e5f16f4b1fde35b8fcf5",
+      "fixed_commit": "1ea82a711c69f590054987b5cb194157f8ce8ac4",
+      "fixed_parents": [
+        "790bb0bb2c03e7a07282e5f16f4b1fde35b8fcf5",
+        "f89d7a3331ba6b5421273e556c0a738e3dd1dd35"
+      ],
+      "merged_at": "2026-09-29T20:28:23Z",
+      "source_root": "more_itertools",
+      "reference_source_paths": [
+        "more_itertools/more.py"
+      ],
+      "upstream_test_paths": [
+        "tests/test_more.py"
+      ],
+      "upstream_ai_assistance": "not established from inspected PR and commit information",
+      "legacy_manifest": null
+    }
+  ],
+  "exclusions": [
+    {
+      "repository": "pallets/click",
+      "pull_request": 3201,
+      "reason": "not_merged",
+      "evidence": "PR API reports merged=false. It addresses the same reported problem #3121 as the merged PR #3225, which is selected instead."
+    },
+    {
+      "repository": "pallets/click",
+      "pull_request": 2991,
+      "reason": "flaky_reproducer",
+      "evidence": "Merged upstream race fix; the PR author explicitly says the reproducer is not consistently failing. Excluded before model evaluation to avoid an unreliable pilot oracle."
+    },
+    {
+      "repository": "theskumar/python-dotenv",
+      "pull_request": 663,
+      "reason": "not_merged",
+      "evidence": "Previously inspected PR API reports closed but merged=false and merge_commit_sha=null; changelog mention alone is insufficient."
+    },
+    {
+      "repository": "pallets/click",
+      "pull_request": 2907,
+      "reason": "not_merged",
+      "evidence": "Previously inspected PR API reports merged=false; not treated as a merged upstream repair."
+    },
+    {
+      "repository": "pallets/click",
+      "pull_request": 2897,
+      "reason": "issue_not_pr",
+      "evidence": "Pull-request endpoint returns404; merged PR #2930 references this issue. It is not an additional independent repair source."
+    }
+  ]
+}
