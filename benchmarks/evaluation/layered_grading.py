@@ -214,6 +214,9 @@ def validate_layered_grade(value, output=None, *, candidate_patch=None, frozen_c
                 raise ValueError("frozen case/regression identity mismatch")
     if set(value["artifacts"]) != {"core-grade.json", "extended-regression.json"}:
         raise ValueError("missing layered artifact identity")
+    core_collection = frozen_case.get("core_collection") if frozen_case is not None else None
+    if core_collection is not None and output is None:
+        raise ValueError("frozen core collection requires saved grading evidence")
     if output is not None:
         if read_json(output / "identity.json") != identity:
             raise ValueError("saved grading identity mismatch")
@@ -221,6 +224,31 @@ def validate_layered_grade(value, output=None, *, candidate_patch=None, frozen_c
             if _hash(output / name) != expected:
                 raise ValueError("layered artifact changed")
             saved = _read_phase(output, name)
+            if name == "core-grade.json" and core_collection is not None:
+                if not isinstance(core_collection, dict) or set(core_collection) != {
+                    "visible",
+                    "hidden",
+                }:
+                    raise ValueError("invalid frozen core collection")
+                for phase in ("visible", "hidden"):
+                    expected = core_collection[phase]
+                    if (
+                        not isinstance(expected, list)
+                        or not expected
+                        or len(set(expected)) != len(expected)
+                        or any(not isinstance(n, str) or "::" not in n for n in expected)
+                    ):
+                        raise ValueError("invalid frozen core collection nodes")
+                    stage = saved.get(phase)
+                    if (
+                        stage is not None
+                        and stage.get("status") in {"passed", "failed"}
+                        and (
+                            not isinstance(stage.get("outcomes"), dict)
+                            or set(stage["outcomes"]) != set(expected)
+                        )
+                    ):
+                        raise ValueError("saved grading differs from frozen core collection")
             summary = (
                 {"case_id": saved.get("case_id"), "status": saved["status"]}
                 if name == "core-grade.json"

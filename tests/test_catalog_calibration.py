@@ -124,3 +124,39 @@ def test_old_revision_is_retained_but_conflicting_same_revision_is_rejected(tmp_
     save(other, case, older)
     with pytest.raises(ValueError, match="conflicting"):
         api().collect_calibrations([case], [other, root], ENVIRONMENT)
+
+
+def test_synthetic_exception_contract_requires_explicit_docker_audit_opt_in(tmp_path):
+    case, root, report = owned_report(tmp_path)
+    case = replace(case, source_kind="synthetic")
+    report["fingerprint"] = case_fingerprint(case)
+    # Owned synthetic contracts may verify exception translation, not only asserts.
+    report["baseline"]["assertion_failures"] = []
+    report["mutant"]["hidden"]["assertion_failures"] = []
+    save(root, case, report)
+    with pytest.raises(ValueError):
+        api().collect_calibrations([case], [root], ENVIRONMENT)
+    assert (
+        api().collect_calibrations([case], [root], ENVIRONMENT, include_synthetic=True)[
+            "case_count"
+        ]
+        == 1
+    )
+
+
+def test_legacy_synthetic_extra_passing_collection_is_retained_not_dropped(tmp_path):
+    case, root, report = owned_report(tmp_path)
+    case = replace(case, source_kind="synthetic")
+    report["fingerprint"] = case_fingerprint(case)
+    extra = "tests/test_app.py::test_existing_behavior"
+    report["baseline"]["outcomes"][extra] = "passed"
+    report["reference"]["visible"]["outcomes"][extra] = "passed"
+    report["mutant"]["visible"]["outcomes"][extra] = "passed"
+    save(root, case, report)
+    result = api().collect_calibrations([case], [root], ENVIRONMENT, include_synthetic=True)
+    assert extra in result["cases"][0]["core_collection"]["visible"]
+    assert result["cases"][0]["additional_passing_nodes"] == [extra]
+    report["mutant"]["visible"]["outcomes"].pop(extra)
+    save(root, case, report)
+    with pytest.raises(ValueError):
+        api().collect_calibrations([case], [root], ENVIRONMENT, include_synthetic=True)

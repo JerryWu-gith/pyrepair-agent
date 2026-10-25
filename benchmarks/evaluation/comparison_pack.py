@@ -126,10 +126,12 @@ def _runtime():
     value = runtime_identity()
     script = Path(__file__).resolve().parents[1] / "run_comparison.py"
     live_script = script.with_name("run_live_comparison.py")
+    goldset_script = script.with_name("run_goldset50.py")
     return {
         **value,
         "comparison_cli_hash": file_hash(script) if script.is_file() else None,
         "live_comparison_cli_hash": file_hash(live_script) if live_script.is_file() else None,
+        "goldset_cli_hash": file_hash(goldset_script) if goldset_script.is_file() else None,
     }
 
 
@@ -163,7 +165,7 @@ def _collection(validation, scope):
     return None
 
 
-def prepare_pack(cases, output, environment_lock, model, trials=3):
+def prepare_pack(cases, output, environment_lock, model, trials=3, *, calibration_reuser=None):
     slots = paired_slots([c.id for c in cases], trials)
     config = comparison_config(model, trials)
     environment = environment_identity(environment_lock)
@@ -195,12 +197,19 @@ def prepare_pack(cases, output, environment_lock, model, trials=3):
             _verify_public_contract(case, public / "r", evidence)
             write_new(public / "evidence.json", evidence)
             write_new(output / "control" / key / "regression.json", {"scope": scopes[case.id]})
-            validation = validate_layered(
-                case,
-                output / "control" / key / "v",
-                test_runner=backend,
-                core_validator=validate_case,
-            )
+            if calibration_reuser is None:
+                validation = validate_layered(
+                    case,
+                    output / "control" / key / "v",
+                    test_runner=backend,
+                    core_validator=validate_case,
+                )
+            else:
+                if scopes[case.id] is not None:
+                    raise ValueError(
+                        "calibration reuse cannot discard an extended regression scope"
+                    )
+                validation = calibration_reuser(case, output / "control" / key / "v", environment)
             write_new(output / "control" / key / "calibration.json", validation)
             if validation["status"] != "valid":
                 raise ValueError(f"invalid comparison preflight: {case.id}; evidence retained")
@@ -227,6 +236,11 @@ def prepare_pack(cases, output, environment_lock, model, trials=3):
                     "calibration_artifacts": _calibration_files(output / "control" / key / "v"),
                     "regression_hash": None if scopes[case.id] is None else digest(scopes[case.id]),
                     "collection_hash": digest(expected_nodes),
+                    **(
+                        {"core_collection": validation["core_collection"]}
+                        if "core_collection" in validation
+                        else {}
+                    ),
                 }
             )
         if digest(_runtime()) != digest(runtime):
