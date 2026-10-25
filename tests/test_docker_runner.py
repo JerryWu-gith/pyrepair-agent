@@ -36,6 +36,10 @@ RELEASES = {
         "2.19.2",
         "86540386c03d588bb81d44bc3928634ff26449851e99741617ecb9037ee5ec0b",
     ),
+    "click": (
+        "8.3.0",
+        "9b9f285302c6e3064f4330c05f05b81945b2a39544279343e6e7c5f27a9baddc",
+    ),
 }
 
 
@@ -310,6 +314,7 @@ def setup_backend(tmp_path, monkeypatch):
             "packaging": "25.0",
             "pluggy": "1.6.0",
             "pygments": "2.19.2",
+            "click": "8.3.0",
         },
         "profile": module._profile(),
         "harness_hashes": module._harness_hashes(),

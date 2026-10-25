@@ -6,6 +6,7 @@ must be dispatched by the verified Docker backend (implemented separately).
 
 from __future__ import annotations
 
+import importlib
 import json
 import os
 import shutil
@@ -30,10 +31,66 @@ from benchmarks.evaluation.container_protocol import (
     output_files,
     read_json,
     read_stage_output,
+    safe_path,
     validate_inventory,
     validate_request,
     validate_stage_result,
 )
+
+
+def _import_profile(repo: Path) -> dict | None:
+    """Data-only import declarations, bound to the read-only task inventory.
+
+    This prevents accidental use of an installed namesake. It is not a security
+    attestation by untrusted Python; the Docker boundary still contains execution.
+    """
+    path = repo / "pyrepair_imports.json"
+    if not path.exists():
+        return None
+    data = read_json(path)
+    if (
+        not isinstance(data, dict)
+        or set(data) != {"version", "roots", "modules"}
+        or type(data["version"]) is not int
+        or data["version"] != 1
+        or data["roots"] not in (["src"], ["."])
+        or not isinstance(data["modules"], dict)
+        or len(data["modules"]) != 1
+    ):
+        raise ProtocolError("invalid task import profile")
+    allowed = {"packaging", "click", "dotenv", "more_itertools", "boltons.dictutils"}
+    for name, relative in data["modules"].items():
+        if name not in allowed or not isinstance(relative, str):
+            raise ProtocolError("unapproved task import module")
+        safe_path(relative)
+        module_path = name.replace(".", "/")
+        prefix = "src/" if data["roots"] == ["src"] else ""
+        if relative not in {prefix + module_path + ".py", prefix + module_path + "/__init__.py"}:
+            raise ProtocolError("task import module/file mismatch")
+        target = repo / relative
+        if not target.is_file() or any(is_link(p) for p in (target, *target.parents)):
+            raise ProtocolError("missing or linked task import source")
+    return data
+
+
+def _activate_import_profile(repo: Path, profile: dict) -> None:
+    for root in reversed(profile["roots"]):
+        sys.path.insert(1, str(repo if root == "." else repo / root))
+    # Pytest itself imports installed packaging. Its own bound class references
+    # remain intact, while task tests must see the candidate package and siblings.
+    for module in profile["modules"]:
+        top = module.split(".")[0]
+        for name in tuple(sys.modules):
+            if name == top or name.startswith(top + "."):
+                del sys.modules[name]
+    origins = {}
+    for name, relative in profile["modules"].items():
+        module = importlib.import_module(name)
+        origin = getattr(module, "__file__", None)
+        if not isinstance(origin, str) or Path(origin).resolve() != (repo / relative).resolve():
+            raise ProtocolError("task package resolved outside declared source")
+        origins[name] = relative
+    print("PYREPAIR_TASK_IMPORTS " + json.dumps(origins, sort_keys=True), flush=True)
 
 
 def _write_new_json(path: Path, data: dict) -> None:
@@ -184,6 +241,7 @@ def run_stage(request: dict, input_root: Path, work_root: Path, output_root: Pat
 def _pytest_child(
     repo: Path, probe_path: Path, paths: list[str], *, agent_mode: bool = False
 ) -> int:
+    profile = _import_profile(repo)
     import pytest
 
     # Import the trusted plugin before exposing repository modules to import.
@@ -195,6 +253,8 @@ def _pytest_child(
 
         plugins.append(agent_pytest_capture)
     sys.path.insert(1, str(repo))
+    if profile is not None:
+        _activate_import_profile(repo, profile)
     os.environ["PYREPAIR_EVAL_PROBE"] = str(probe_path)
     return int(
         pytest.main(

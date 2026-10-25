@@ -1,8 +1,8 @@
 # 三十道开源缺陷来源目录
 
-日期：2026-10-25。**当前是来源登记完成，不是三十题gold set已经验收完成。** 已核对合并PR、固定修复提交及第一父版本；没有运行新增任务的Docker预检或DeepSeek评测。
+来源登记日期：2026-10-25。本文件与机器目录只负责来源身份，不是可执行任务清单。后续更新：2026-10-26 三十题已完成 Docker 离线校准，见[任务验收记录](opensource-task-calibration.md)；尚未运行新一轮 DeepSeek 评测。
 
-最新进展：三十份生产参考补丁和五十五个去重源码版本已准备并独立复核，见 [源码与参考准备记录](opensource-reference-preparation.md)。文档链接经用户批准单独留证，不创建或跟随。此进展不等于公开/隐藏验收资产已完成或模型通过。
+三十份生产参考补丁和五十五个去重源码版本的独立复核见[源码与参考准备记录](opensource-reference-preparation.md)。文档链接经用户批准单独留证，不创建或跟随。来源校验、任务校准、模型性能是三个不同阶段，不能相互替代。
 
 依据 [统一五十题设计](superpowers/specs/2026-10-25-unified-goldset50-design.md) 与 [本阶段实施计划](superpowers/plans/2026-10-25-unified-goldset-sources.md)。机器可读来源见 [opensource_catalog30.json](../benchmarks/opensource_catalog30.json)，检查入口见 [inspect_source_catalog.py](../benchmarks/inspect_source_catalog.py)。它不是旧运行器可直接执行的任务manifest。
 

@@ -26,6 +26,7 @@ DEPENDENCIES = {
     "packaging": "25.0",
     "pluggy": "1.6.0",
     "pygments": "2.19.2",
+    "click": "8.3.0",
 }
 PROFILE = {
     "network": "none",

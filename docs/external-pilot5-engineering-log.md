@@ -1,6 +1,6 @@
 # 五题真实开源缺陷评测工程记录
 
-本日志只记录新增五题阶段，不改写已有二十题开发成绩。密钥不写入日志。离线检查、真实模型运行和性能结论分开记录。
+本日志保留最初五题调查历史；自步骤 2 起范围改为统一五十题建设，不改写已有二十题开发成绩。密钥不写入日志。离线检查、真实模型运行和性能结论分开记录。
 
 ## 2026-10-25 / 步骤 1：确认边界并核对候选来源
 
@@ -63,3 +63,25 @@
 - 证据根：`D:/Project/PyRepair Agent/tmp/catalog30-reference-20261025-2c26859/`；初轮/继续工具摘要、元数据、缓存和两份run报告均在；JUnit为`D:/Project/PyRepair Agent/tmp/r-ff4ed8b1/focused.xml`。规范目录身份SHA256为`124ea139447523fe1b4836bde9c3a82f176a4db11ef3ada93b29e0bfb56ae3e4`。
 - 当前结论：`references_prepared`，不是`calibrated`，ready_for_model_evaluation=false，model_calls=0，upstream_code_executed=false。完整源码和原始准备证据只留本地，不默认提交或发布。
 - 遗留：新增题的公开复现、隐藏边界、回归范围、不完整补丁、src导入和Docker环境校准仍需实施；许可分发义务未在本步宣布通过。完成这些后再补两道自建，冻结五十题，再统一DeepSeek评测。
+
+## 2026-10-25 至 2026-10-26 / 步骤 5：装配三十题并启动 Docker 校准
+
+- 目标：执行[测试资产与校准计划](superpowers/plans/2026-10-25-catalog-task-calibration.md)，保持生产 Agent 冻结，无新模型调用。
+- 覆盖层：三组子代理各自只写数据模块，静态比较真实 buggy/fixed 源码和测试。缓存 commit JSON 实际只有 sha/parents/tree，没有 files/diff；因此依据固定快照中的测试文件差异，不声称读过不存在的元数据。
+- 新装配器：先独立复核来源与参考补丁，再检查覆盖层 AST、节点和 mutant 锚点；只创建全新输出，私有补丁/隐藏测试不进入公开树，编辑范围为生产包现有受允许 Python 文件。已有两题因布局/导入/范围变化进入新 revision 3，旧 revision 2 保留。
+- TDD：装配器先观察到缺实现断言失败，再由真实自有 ZIP/Git 字节夹具验证隐藏隔离、全包 ACL、错节点/错锚点/越界拒绝、引用篡改拒绝及不覆写；7 项通过。未宿主执行任何上游 Python。
+- 导入问题：自有 src/packaging 小仓库实际误用环境同名包，owned_answer 不存在；新增只读导入配置、候选模块缓存清除和来源检查后，9 项导入测试及 18 项原入口测试通过。可信 pytest/probe 保持先加载，未把来源检查当作恶意源码防护证明。
+- 依赖：dotenv CLI 缺 Click；核对官方 PyPI Click 8.3.0 wheel 摘要，新增固定依赖并构建新镜像/新锁。受限 PowerShell HTTPS 请求被拒，官方元数据通过可用只读网页接口核对，实际构建准备依权限流程再次按官方元数据校验。旧锁不覆写。
+- 工具回归：新增依赖后测试夹具仍固定旧依赖集合而拒绝新锁，更新完整协议夹具；受限环境的硬链接创建 WinError 5 通过 scoped 权限运行解决，未跳过安全测试，88 passed。Ruff 仅整理本次新文件。
+- 新环境：镜像 `sha256:eb08da21b62bf636ca21adebc9ae298d355d440166522042444c7fe1116f790f`；九项真实自有安全/超时检查全部通过，来源与路径详见[校准记录](opensource-task-calibration.md)。
+- 资产问题：静态审查发现 BOM、empty-get、Click EOF 首版 mutant 只破坏 P2P，未暴露隐藏 F2P；改为明确的 grammar/插值/未终止行遗漏，不放宽评分器。首版 a01 不覆盖，修正后新装配 a02。
+- 中断：审批服务曾报告额度限制，首次真实校准命令未执行；子代理后续修正也未完成。2026-10-26 用户继续后主代理完成三个 mutant 修改并重新发起，未自动冒充已运行。
+- 当前证据：两版均装配 30 题；首个 packaging hash 任务真实校准 valid；a02 三十题校准已启动，未宣布全部验收。首题和批次目录分别保留。现有源/引用/装配/导入定向测试 117 passed；最终回归与审查尚待完成。
+- 审查发现并修复 P2：输出含 `..` 别名可绕过 lexical 重叠检查。用自有缓存夹具观察 DID NOT RAISE，再在拒绝链接后 resolve 两路径，8 个装配测试通过；只读复审确认关闭。此次只改装配工具，不改变已启动校准的容器 harness/锁。
+- a02 暴露 boltons mutant 过弱：baseline 和参考均符合预期，但 mutant 也 passed。检查真实 urlutils 对 dictutils 的复用及旧 private/opensource_v2 资产，确认应采用已登记的只物化新键边界，而非旧 v1 的单文件修复。修正注册配方，不修改生产源码或评分器，旧失败保留；待新资产单独校准。
+- a02 整批结果：30 candidate，29 valid、1 invalid，无环境/导入/收集技术错误；无效为上述 boltons 样本。a03 新资产只改该人工补丁和说明，仅重验该题，结果 valid。
+- 新增只读 `catalog_calibration.py`：先观察缺实现失败，再 8 项自有数据测试通过；复核资产指纹、环境、基线断言、参考双通过、mutant 公开过/隐藏 F2P 拒绝及完整性/清理/收集。不同旧指纹不能 qualify 新题，同指纹 invalid 冲突拒绝，不能选择最好记录。只读审查无 P1/P2。
+- 最终索引：a03 `calibration-index.json` 对 30 个最终指纹全部验证通过，复用 a02 未变 29 题与 a03 修正 1 题；87 F2P + 68 P2P = 155 个登记节点。五仓库分布为 more-itertools 3、boltons 1、packaging 12、Click 8、python-dotenv 6。不把节点数当题数或模型成功率。
+- 环境锁 SHA-256 为 `788e6a18f3d4f3683444b4bd4407723ff6531b1bb31ed60e056089f6a517b86e`。生产 `src/pyrepair/` 和 `pyproject.toml` 与冻结基线无差异。旧记录及旧结果未覆盖，无新 DeepSeek 请求；ready_for_model_evaluation 仍 false，统一五十题尚未冻结。
+- 最终工具回归：232 passed、0 failures/errors/skips，18.02 秒；JUnit `D:/Project/PyRepair Agent/tmp/r-33625427/focused.xml`。Ruff 和 8 个选定新文件格式检查通过。没有重复整套历史模型实验，三十题的校准重跑仅限修改后的 boltons 一题。
+- 后续：记录本轮所有无效题及原因，只修评测合同/环境/人工补丁；三十题通过后再补自建两题并冻结五十题。没有 DeepSeek 请求、推送、PR 或简历新成绩。
