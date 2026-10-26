@@ -51,3 +51,13 @@
 - [ ] Run28publicbaselines once through DockerAgentTestRunner/FrozenParser, retain rawobservedTestRun+receipt. May run after Task1static while Task2 outside-runtime scripts develop; all28pass required.
 - [ ] Inspect actual133prefix+zero-callfault, authorize167/3107 under user'sdesign, launchhiddenone-shot, verifynewresponse andunchangedold506.
 - [ ] Readonly30minheartbeat; no retries/clearlocks/resume. FinalSTAGED results/problem log andremoveheartbeat onterminal. Preserveworktree/localcommits, noGitHubpush.
+
+### Task 4: Approved strict truncated-address supplement (before Task3 launch)
+
+**Files:** comparison_evidence.py and tests/test_comparison_evidence.py only. Parent owns this approved addendum, metadata pack/requalification/launch. User already approved restricted address rule and reuse of saved observations; no repeated design question.
+
+- [ ] Use literal saved c41 summary/traceback (complete `<locals>.Strategy object at 0x...` plus `[<test_repro....HEX>]`) and only change paired addresses. FrozenParser must accept without altering report identity or initial_facts. Write positive test, observe baseline mismatch RED before implementation.
+- [ ] Normalize only addresses with unique matching complete/default-object witness, stable prefix/type and matching summary/traceback correspondence; preserve other numbers, expressions and source. Missing/ambiguous/mismatched witness, changed type/source/node/exception, unrelated hex or ordinary assertion changes reject. Preserve existing complete-object and hash behavior; no generic hex stripping.
+- [ ] Format before final focused test_comparison_evidence.py, Ruff no-cache; scoped two-file commit/report. Fresh task spec+quality review; fix/re-review only findings.
+- [ ] Parent new metadata-only pack b02, unchanged p/control bytes, then new passing receipt from saved28TestRuns with explicit requalification provenance. Do not repeat Docker or overwrite failed a01 observations. Current strict verifier and28/28 parser gate remain intact.
+- [ ] Parent final integration review, actualinspect/auth and one-shot167-slot launch via existing reviewed Task2 scripts. No new runtime/modules/config/Agent changes. Keep old506 immutable, cap3107/cumulative3613<=5550.
