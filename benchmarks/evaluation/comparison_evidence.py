@@ -146,7 +146,7 @@ def initial_facts(value, spec) -> dict:
 
 
 _HASH_EXPANSION = re.compile(
-    r"(?m)^(?:E[ \t]+)?assert (?P<left>-?(?:0|[1-9][0-9]{0,18})) == "
+    r"(?m)^(?:E[ \t]+)?(?:AssertionError: )?assert (?P<left>-?(?:0|[1-9][0-9]{0,18})) == "
     r"(?P<right>-?(?:0|[1-9][0-9]{0,18}))\n"
     r"(?:E[ \t]+)?[ \t]*\+  where (?P<where>-?(?:0|[1-9][0-9]{0,18})) = "
     r"(?P<left_expr>hash\([^\n]+\))\n"
@@ -174,11 +174,11 @@ def _hash_signature(value):
         or any(not -(2**63) <= number < 2**63 for number in numbers)
     ):
         return
-    sources = re.findall(r"(?m)^>[ \t]+(assert [^\n]+)$", value["traceback"])
-    if len(sources) != 1:
+    sources = list(re.finditer(r"(?m)^(?:>[ \t]+|[ \t]{4,})(assert [^\n]+)$", value["traceback"]))
+    if len(sources) != 1 or value["traceback"][sources[0].end() : trace.start()] != "\n":
         return
     try:
-        statement = ast.parse(sources[0]).body[0]
+        statement = ast.parse(sources[0][1]).body[0]
         comparison = statement.test if isinstance(statement, ast.Assert) else None
         if (
             not isinstance(comparison, ast.Compare)
@@ -186,17 +186,15 @@ def _hash_signature(value):
             or not isinstance(comparison.ops[0], ast.Eq)
         ):
             return
-        for expression, source in zip(
-            (summary["left_expr"], summary["right_expr"]),
-            (comparison.left, comparison.comparators[0]),
-        ):
+        # Expanded arguments may be opaque reprs, e.g. hash(<Requirement(...)>).
+        # Keep those literal in both signatures; only source is Python syntax.
+        for source in (comparison.left, comparison.comparators[0]):
             if (
                 not isinstance(source, ast.Call)
                 or not isinstance(source.func, ast.Name)
                 or source.func.id != "hash"
                 or len(source.args) != 1
                 or source.keywords
-                or ast.dump(ast.parse(expression, mode="eval").body) != ast.dump(source)
             ):
                 return
     except (SyntaxError, ValueError, RecursionError):

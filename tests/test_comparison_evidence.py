@@ -350,3 +350,61 @@ def test_hash_comparison_does_not_confuse_literal_markers_with_validated_outputs
     parser, _ = hash_parser(public, hash_run(("<HASH_LEFT>", "<HASH_RIGHT>")))
     with pytest.raises(ValueError, match="baseline"):
         parser.parse(hash_run(NEW_HASHES))
+
+
+def saved_short_hash_run(values=OLD_HASHES):
+    # Literal summary/traceback shape from saved p/c22/evidence.json, not a
+    # reconstructed long traceback. Only the two runtime hash outputs vary.
+    summary = (
+        "AssertionError: assert 575258657340867558 == 5828956449428120566\n"
+        " +  where 575258657340867558 = hash(<Requirement('sample==2.0.0')>)\n"
+        " +  and   5828956449428120566 = hash(<Requirement('sample==2.0.0.0')>)"
+    )
+    traceback = (
+        "pyrepair_public_tests/test_repro.py:8: in test_equivalent_release_requirements_are_one_key\n"
+        "    assert hash(first) == hash(second)\n"
+        "E   AssertionError: assert 575258657340867558 == 5828956449428120566\n"
+        "E    +  where 575258657340867558 = hash(<Requirement('sample==2.0.0')>)\n"
+        "E    +  and   5828956449428120566 = hash(<Requirement('sample==2.0.0.0')>)"
+    )
+    for old, new in zip(OLD_HASHES, values):
+        summary = summary.replace(old, new)
+        traceback = traceback.replace(old, new)
+    run = failed_run()
+    return replace(run, failures=(replace(run.failures[0], summary=summary, traceback=traceback),))
+
+
+def test_saved_short_hash_trace_with_opaque_pytest_reprs_preserves_frozen_facts(public):
+    from benchmarks.evaluation.comparison_evidence import initial_facts
+
+    parser, evidence = hash_parser(public, saved_short_hash_run())
+    _, spec = public
+    before = json.dumps(initial_facts(evidence, spec), sort_keys=True)
+    serialized = json.dumps(evidence, sort_keys=True)
+    assert parser.parse(saved_short_hash_run(NEW_HASHES)) is parser.report
+    assert "sample==2.0.0.0" in parser.report.summary
+    assert json.dumps(initial_facts(evidence, spec), sort_keys=True) == before
+    assert json.dumps(evidence, sort_keys=True) == serialized
+
+
+@pytest.mark.parametrize(
+    "before,after",
+    [
+        ("Requirement('sample==2.0.0')", "Other('sample==2.0.0')"),
+        ("sample==2.0.0.0", "sample==2.0.0.1"),
+        ("assert hash(first) == hash(second)", "assert hash(first) == 5"),
+        ("where 5558181234910447655", "where 7"),
+        ("test_repro.py:8:", "test_repro.py:9:"),
+    ],
+)
+def test_saved_short_hash_trace_preserves_reprs_source_and_other_numbers(public, before, after):
+    parser, _ = hash_parser(public, saved_short_hash_run())
+    run = saved_short_hash_run(NEW_HASHES)
+    failure = run.failures[0]
+    changed = replace(
+        failure,
+        summary=failure.summary.replace(before, after),
+        traceback=failure.traceback.replace(before, after),
+    )
+    with pytest.raises(ValueError, match="baseline"):
+        parser.parse(replace(run, failures=(changed,)))
