@@ -1,4 +1,6 @@
 import copy
+import json
+from dataclasses import replace
 
 import pytest
 
@@ -205,3 +207,146 @@ def test_address_comparison_does_not_hide_business_hex_types_or_nondefault_repr(
     parser = FrozenParser(capture_evidence(repo, spec, Replay()), spec)
     with pytest.raises(ValueError, match="baseline"):
         parser.parse(failed_run(after))
+
+
+OLD_HASHES = ("575258657340867558", "5828956449428120566")
+NEW_HASHES = ("5558181234910447655", "6198252884123138357")
+
+
+def hash_run(values=OLD_HASHES, source="assert hash(first) == hash(second)"):
+    left, right = values
+    summary = (
+        f"assert {left} == {right}\n"
+        f" +  where {left} = hash(first)\n"
+        f" +  and   {right} = hash(second)"
+    )
+    trace = (
+        "________________ test_add ________________\n"
+        "    def test_add():\n"
+        "        first, second = 'first', 'second'\n"
+        f">       {source}\n"
+        + "\n".join("E       " + line for line in summary.splitlines())
+        + "\n\ntests/test_app.py:4: AssertionError\nDiagnostic count: 17"
+    )
+    run = failed_run()
+    return replace(run, failures=(replace(run.failures[0], summary=summary, traceback=trace),))
+
+
+def hash_parser(public, run):
+    from benchmarks.evaluation.comparison_evidence import FrozenParser, capture_evidence
+
+    class Replay:
+        def run(self, repo, target=None):
+            return run
+
+    repo, spec = public
+    evidence = capture_evidence(repo, spec, Replay())
+    return FrozenParser(evidence, spec), evidence
+
+
+@pytest.mark.parametrize("values", [NEW_HASHES, ("-575258657340867558", "0")])
+def test_dynamic_hash_outputs_preserve_frozen_report_and_model_facts(public, values):
+    from benchmarks.evaluation.comparison_evidence import initial_facts
+
+    parser, evidence = hash_parser(public, hash_run())
+    _, spec = public
+    before = json.dumps(initial_facts(evidence, spec), sort_keys=True)
+    serialized = json.dumps(evidence, sort_keys=True)
+    assert parser.parse(hash_run(values)) is parser.report
+    assert parser.report.summary.startswith("assert 575258657340867558 == 5828956449428120566")
+    assert json.dumps(initial_facts(evidence, spec), sort_keys=True) == before
+    assert json.dumps(evidence, sort_keys=True) == serialized
+
+
+@pytest.mark.parametrize(
+    "before,after",
+    [
+        ("hash(second)", "hash(third)"),
+        ("hash(second)", "6198252884123138357"),
+        ("hash(first)", "len(first)"),
+        (" +  and   6198252884123138357 = hash(second)", ""),
+        ("where 5558181234910447655", "where 7"),
+        ("Diagnostic count: 17", "Diagnostic count: 18"),
+        ("test_app.py:4", "test_app.py:5"),
+    ],
+)
+def test_hash_comparison_rejects_changed_nonoutput_text(public, before, after):
+    parser, _ = hash_parser(public, hash_run())
+    run = hash_run(NEW_HASHES)
+    failure = run.failures[0]
+    changed = replace(
+        failure,
+        summary=failure.summary.replace(before, after),
+        traceback=failure.traceback.replace(before, after),
+    )
+    with pytest.raises(ValueError, match="baseline"):
+        parser.parse(replace(run, failures=(changed,)))
+
+
+@pytest.mark.parametrize(
+    "values",
+    [
+        ("7", "7"),
+        ("+7", "8"),
+        ("07", "8"),
+        ("-0", "8"),
+        ("7.0", "8"),
+        ("9" * 100, "8"),
+        ("9223372036854775808", "8"),
+        ("-9223372036854775809", "8"),
+    ],
+)
+def test_hash_comparison_rejects_equal_malformed_or_oversized_outputs(public, values):
+    parser, _ = hash_parser(public, hash_run())
+    with pytest.raises(ValueError, match="baseline"):
+        parser.parse(hash_run(values))
+
+
+@pytest.mark.parametrize("source", ["assert first == second", "assert hash(first) == 5", ""])
+def test_hash_comparison_requires_hash_vs_hash_source_on_both_reports(public, source):
+    parser, _ = hash_parser(public, hash_run(source=source))
+    with pytest.raises(ValueError, match="baseline"):
+        parser.parse(hash_run(NEW_HASHES, source=source))
+
+
+@pytest.mark.parametrize("field", ["summary", "traceback", "exception_type", "node_id"])
+def test_hash_comparison_requires_matching_summary_traceback_and_metadata(public, field):
+    parser, _ = hash_parser(public, hash_run())
+    run = hash_run(NEW_HASHES)
+    changes = {
+        "summary": hash_run().failures[0].summary,
+        "traceback": hash_run().failures[0].traceback,
+        "exception_type": "TypeError",
+        "node_id": "tests/test_app.py::test_other",
+    }
+    changed = replace(run.failures[0], **{field: changes[field]})
+    with pytest.raises(ValueError, match="baseline"):
+        parser.parse(replace(run, failures=(changed,)))
+
+
+@pytest.mark.parametrize(
+    "before,after",
+    [
+        ("= hash(first)", "= hash(first + 1)"),
+        ("where 575258657340867558", "where 7"),
+        (" +  and   5828956449428120566 = hash(second)", ""),
+        ("575258657340867558", "<HASH_LEFT>"),
+    ],
+)
+def test_hash_comparison_does_not_normalize_invalid_frozen_expansions(public, before, after):
+    frozen = hash_run()
+    failure = frozen.failures[0]
+    changed = replace(
+        failure,
+        summary=failure.summary.replace(before, after),
+        traceback=failure.traceback.replace(before, after),
+    )
+    parser, _ = hash_parser(public, replace(frozen, failures=(changed,)))
+    with pytest.raises(ValueError, match="baseline"):
+        parser.parse(hash_run(NEW_HASHES))
+
+
+def test_hash_comparison_does_not_confuse_literal_markers_with_validated_outputs(public):
+    parser, _ = hash_parser(public, hash_run(("<HASH_LEFT>", "<HASH_RIGHT>")))
+    with pytest.raises(ValueError, match="baseline"):
+        parser.parse(hash_run(NEW_HASHES))

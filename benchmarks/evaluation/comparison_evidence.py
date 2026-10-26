@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import ast
 import json
 import re
 from dataclasses import asdict, fields, replace
@@ -144,8 +145,77 @@ def initial_facts(value, spec) -> dict:
     return json.loads(_initial_messages(report, (), context)[1]["content"])
 
 
+_HASH_EXPANSION = re.compile(
+    r"(?m)^(?:E[ \t]+)?assert (?P<left>-?(?:0|[1-9][0-9]{0,18})) == "
+    r"(?P<right>-?(?:0|[1-9][0-9]{0,18}))\n"
+    r"(?:E[ \t]+)?[ \t]*\+  where (?P<where>-?(?:0|[1-9][0-9]{0,18})) = "
+    r"(?P<left_expr>hash\([^\n]+\))\n"
+    r"(?:E[ \t]+)?[ \t]*\+  and   (?P<and>-?(?:0|[1-9][0-9]{0,18})) = "
+    r"(?P<right_expr>hash\([^\n]+\))$"
+)
+
+
+def _hash_signature(value):
+    """Mask only corroborated pytest hash outputs in the comparison copy."""
+    if value["exception_type"] != "AssertionError":
+        return
+    matches = [list(_HASH_EXPANSION.finditer(value[name])) for name in ("summary", "traceback")]
+    if any(len(items) != 1 for items in matches):
+        return
+    summary, trace = (items[0] for items in matches)
+    if summary.groupdict() != trace.groupdict():
+        return
+    numbers = [int(summary[name]) for name in ("left", "right", "where", "and")]
+    if (
+        numbers[0] == numbers[1]
+        or summary["left"] != summary["where"]
+        or summary["right"] != summary["and"]
+        or any(summary[name] != str(number) for name, number in zip(("left", "right"), numbers))
+        or any(not -(2**63) <= number < 2**63 for number in numbers)
+    ):
+        return
+    sources = re.findall(r"(?m)^>[ \t]+(assert [^\n]+)$", value["traceback"])
+    if len(sources) != 1:
+        return
+    try:
+        statement = ast.parse(sources[0]).body[0]
+        comparison = statement.test if isinstance(statement, ast.Assert) else None
+        if (
+            not isinstance(comparison, ast.Compare)
+            or len(comparison.ops) != 1
+            or not isinstance(comparison.ops[0], ast.Eq)
+        ):
+            return
+        for expression, source in zip(
+            (summary["left_expr"], summary["right_expr"]),
+            (comparison.left, comparison.comparators[0]),
+        ):
+            if (
+                not isinstance(source, ast.Call)
+                or not isinstance(source.func, ast.Name)
+                or source.func.id != "hash"
+                or len(source.args) != 1
+                or source.keywords
+                or ast.dump(ast.parse(expression, mode="eval").body) != ast.dump(source)
+            ):
+                return
+    except (SyntaxError, ValueError, RecursionError):
+        return
+    value["hash_expansion_validated"] = True
+    for name, match in zip(("summary", "traceback"), (summary, trace)):
+        text = value[name]
+        for group in ("and", "where", "right", "left"):
+            start, end = match.span(group)
+            text = (
+                text[:start]
+                + ("<HASH_LEFT>" if group in ("left", "where") else "<HASH_RIGHT>")
+                + text[end:]
+            )
+        value[name] = text
+
+
 def _baseline_signature(report):
-    """Ignore only process addresses in default object repr, never model input."""
+    """Ignore validated runtime outputs only for comparison, never model input."""
     value = asdict(report)
     for name in ("summary", "traceback"):
         value[name] = re.sub(
@@ -153,6 +223,7 @@ def _baseline_signature(report):
             r"\1<ADDRESS>\2",
             value[name],
         )
+    _hash_signature(value)
     return value
 
 
