@@ -1,6 +1,6 @@
 import copy
 import json
-from dataclasses import replace
+from dataclasses import asdict, replace
 
 import pytest
 
@@ -408,3 +408,142 @@ def test_saved_short_hash_trace_preserves_reprs_source_and_other_numbers(public,
     )
     with pytest.raises(ValueError, match="baseline"):
         parser.parse(replace(run, failures=(changed,)))
+
+
+def saved_truncated_object_run(address="7a7f8c9752b0"):
+    # Literal saved public summary/traceback; no external fixture dependency.
+    summary = (
+        "AssertionError: assert [<test_repro....7a7f8c9752b0>] == [<class 'test...s>.Strategy'>]\n"
+        "  \n"
+        "  At index 0 diff: <test_repro.test_default_true_preserves_class_flag_value_identity."
+        "<locals>.Strategy object at 0x7a7f8c9752b0> != <class 'test_repro."
+        "test_default_true_preserves_class_flag_value_identity.<locals>.Strategy'>\n"
+        "  Use -v to get more diff"
+    )
+    traceback = (
+        "pyrepair_public_tests/test_repro.py:20: in "
+        "test_default_true_preserves_class_flag_value_identity\n"
+        "    assert observed == [Strategy]\n"
+        "E   AssertionError: assert [<test_repro....7a7f8c9752b0>] == [<class 'test...s>.Strategy'>]\n"
+        "E     \n"
+        "E     At index 0 diff: <test_repro."
+        "test_default_true_preserves_class_flag_value_identity.<locals>.Strategy object at "
+        "0x7a7f8c9752b0> != <class 'test_repro."
+        "test_default_true_preserves_class_flag_value_identity.<locals>.Strategy'>\n"
+        "E     Use -v to get more diff"
+    )
+    failure = PytestFailure(
+        "pyrepair_public_tests/test_repro.py::test_default_true_preserves_class_flag_value_identity",
+        "call",
+        "failed",
+        "AssertionError",
+        summary.replace("7a7f8c9752b0", address),
+        traceback.replace("7a7f8c9752b0", address),
+        0,
+    )
+    return replace(failed_run(), failures=(failure,))
+
+
+def truncated_object_parser(public, run):
+    from benchmarks.evaluation.comparison_evidence import FrozenParser, capture_evidence
+    from pyrepair.pytest_parser import PytestParser
+
+    repo, spec = public
+    evidence = capture_evidence(repo, spec, OwnedRunner())
+    evidence["failure"] = json.loads(json.dumps(asdict(PytestParser().parse(run))))
+    spec = replace(spec, visible_tests=("pyrepair_public_tests/test_repro.py",))
+    return FrozenParser(evidence, spec), evidence, spec
+
+
+def test_saved_truncated_object_addresses_preserve_frozen_report_and_model_facts(public):
+    from benchmarks.evaluation.comparison_evidence import initial_facts
+
+    parser, evidence, spec = truncated_object_parser(public, saved_truncated_object_run())
+    before = json.dumps(initial_facts(evidence, spec), sort_keys=True)
+    serialized = json.dumps(evidence, sort_keys=True)
+    assert parser.parse(saved_truncated_object_run("7857eaf792b0")) is parser.report
+    assert "[<test_repro....7a7f8c9752b0>]" in parser.report.summary
+    assert "0x7a7f8c9752b0" in parser.report.traceback
+    assert json.dumps(initial_facts(evidence, spec), sort_keys=True) == before
+    assert json.dumps(evidence, sort_keys=True) == serialized
+
+
+@pytest.mark.parametrize("field", ["summary", "traceback", "both"])
+@pytest.mark.parametrize(
+    "before,after",
+    [
+        (" object at 0x", " value at 0x"),  # Missing complete default-repr witness.
+        ("[<test_repro....", "[<other...."),
+        ("[<test_repro....", "[<test_repro.other...."),
+        ("object at 0x7", "object at 0x6"),
+        ("object at 0x7", "object at 0xz7"),
+        ("[<test_repro....7", "[<test_repro....z7"),
+        ("7a7f8c9752b0", "123456789abcdef0123456789"),
+        ("7857eaf792b0", "fedcba9876543210987654321"),
+        ("diff: <test_repro.", "diff: <other_repro."),
+        ("Use -v", "<test_repro.Extra object at 0x123> Use -v"),
+        ("Use -v", "<test_repro....123> Use -v"),
+    ],
+)
+def test_truncated_object_comparison_requires_unique_consistent_witnesses(
+    public, field, before, after
+):
+    def changed(run):
+        failure = run.failures[0]
+        names = ("summary", "traceback") if field == "both" else (field,)
+        updates = {name: getattr(failure, name).replace(before, after) for name in names}
+        return replace(run, failures=(replace(failure, **updates),))
+
+    # Invalid frozen reports must also remain fail-closed; never just validate
+    # the newly observed report and assume the frozen one was well-formed.
+    parser, _, _ = truncated_object_parser(public, changed(saved_truncated_object_run()))
+    with pytest.raises(ValueError, match="baseline"):
+        parser.parse(changed(saved_truncated_object_run("7857eaf792b0")))
+
+
+@pytest.mark.parametrize(
+    "field,before,after",
+    [
+        ("summary", "7857eaf792b0", "7a7f8c9752b0"),
+        ("traceback", "7857eaf792b0", "7a7f8c9752b0"),
+        ("summary", "Strategy", "Other"),
+        ("traceback", "assert observed == [Strategy]", "assert observed == [Other]"),
+        ("traceback", "test_repro.py:20:", "test_repro.py:21:"),
+        ("exception_type", "AssertionError", "TypeError"),
+        ("node_id", "flag_value_identity", "flag_value_other"),
+    ],
+)
+def test_truncated_object_comparison_preserves_metadata_source_and_types(
+    public, field, before, after
+):
+    parser, _, _ = truncated_object_parser(public, saved_truncated_object_run())
+    run = saved_truncated_object_run("7857eaf792b0")
+    failure = run.failures[0]
+    failure = replace(failure, **{field: getattr(failure, field).replace(before, after)})
+    with pytest.raises(ValueError, match="baseline"):
+        parser.parse(replace(run, failures=(failure,)))
+
+
+@pytest.mark.parametrize(
+    "old,new",
+    [
+        ("\nDiagnostic: 17", "\nDiagnostic: 18"),
+        ("\nDiagnostic: 0x7a7f8c9752b0", "\nDiagnostic: 0x7857eaf792b0"),
+        ("\nDiagnostic: 7a7f8c9752b0", "\nDiagnostic: 7857eaf792b0"),
+    ],
+)
+def test_truncated_object_comparison_never_masks_other_numeric_diagnostics(public, old, new):
+    def diagnostic(run, text):
+        failure = run.failures[0]
+        return replace(
+            run,
+            failures=(
+                replace(
+                    failure, summary=failure.summary + text, traceback=failure.traceback + text
+                ),
+            ),
+        )
+
+    parser, _, _ = truncated_object_parser(public, diagnostic(saved_truncated_object_run(), old))
+    with pytest.raises(ValueError, match="baseline"):
+        parser.parse(diagnostic(saved_truncated_object_run("7857eaf792b0"), new))

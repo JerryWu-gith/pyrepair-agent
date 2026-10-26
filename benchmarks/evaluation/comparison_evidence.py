@@ -212,9 +212,46 @@ def _hash_signature(value):
         value[name] = text
 
 
+def _truncated_object_signature(value):
+    """Corroborate pytest abbreviations before masking either address span."""
+    if value["exception_type"] != "AssertionError":
+        return
+    complete = re.compile(
+        r"<(?P<type>[A-Za-z_]\w*(?:\.(?:[A-Za-z_]\w*|<locals>))*) object at "
+        r"0x(?P<address>[0-9a-fA-F]{1,16})>"
+    )
+    abbreviated = re.compile(
+        r"<(?P<prefix>[A-Za-z_]\w*(?:\.[A-Za-z_]\w*)*\.?)"
+        r"\.\.\.(?P<address>[0-9a-fA-F]{1,16})>"
+    )
+    pairs = []
+    for name in ("summary", "traceback"):
+        full = list(complete.finditer(value[name]))
+        short = list(abbreviated.finditer(value[name]))
+        if len(full) != 1 or len(short) != 1:
+            return
+        full, short = full[0], short[0]
+        if (
+            full["address"] != short["address"]
+            or not full["type"].startswith(short["prefix"])
+            or len(short["prefix"]) >= len(full["type"])
+        ):
+            return
+        pairs.append((full, short))
+    if any(pairs[0][i].groupdict() != pairs[1][i].groupdict() for i in (0, 1)):
+        return
+    value["truncated_object_validated"] = True
+    for name, pair in zip(("summary", "traceback"), pairs):
+        text = value[name]
+        for start, end in sorted((match.span("address") for match in pair), reverse=True):
+            text = text[:start] + "<ADDRESS>" + text[end:]
+        value[name] = text
+
+
 def _baseline_signature(report):
     """Ignore validated runtime outputs only for comparison, never model input."""
     value = asdict(report)
+    _truncated_object_signature(value)
     for name in ("summary", "traceback"):
         value[name] = re.sub(
             r"(<[A-Za-z_][\w.]* object at )0x[0-9a-fA-F]+(>)",
