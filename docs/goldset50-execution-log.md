@@ -93,3 +93,43 @@
 - 新阶段目录 `D:/Project/PyRepair Agent/tmp/g50r-1026-a01`；结束后启动器仅调用 saved-results report 路由写入 `D:/Project/PyRepair Agent/tmp/g50combined-1026-a01`，不生成或重验候选。任何技术错误保留现场，不自动重新执行。
 - 重新建立 `pyrepair` heartbeat。为回应用户关于Codex消耗的顾虑，改为每30分钟只读观察；不影响Python评测进程的连续执行。完成/停止统一汇报并删除监看，不自动调用模型、恢复或重试。
 - 额外澄清：Codex额度限制可能阻止对话/监看继续，但原Python评测的直接停止证据为Docker查询30秒超时；DeepSeek调用和Codex订阅用量不是同一套账。没有因用户提问而停掉已启动的恢复进程。
+- 后续只读检查已确认新阶段首槽完成，下一槽为 `os_boltons_addlist_458--3--full-agent`；此时新配额预留和响应均为0，证明旧候选的恢复没有重放模型请求。进程仍活动、无退出记录或stderr，随后由既有控制器执行170个新生成槽。
+
+## 恢复阶段第二次技术停止（2026-10-26 15:34，UTC+8）
+
+- 启动器退出记录 UTC `2026-10-26T07:34:05.922920+00:00`；本次heartbeat于UTC07:49核对。阶段journal终态5/171，含1次旧候选复用、3次已生成并验收的新候选和1次零调用worker技术错误。新阶段14次预留全部有响应、0 API error；累计旧492+新14=506次。
+- 旧 boltons 超时槽已使用同候选独立重验通过，第三次Agent运行也通过；未修改原130条记录或原492次响应。新停止槽是 `os_packaging_hash_1232--1--full-agent`，阶段目录 `s0004`，该槽尚未预留任何模型调用、无candidate/grade；supervision为worker_error/returncode2，cleanup clean。
+- 这次不是此前Docker查询超时：保存的adapter运行正常完成公开pytest，状态failed、exit1、正确导入仓库 `src/packaging/__init__.py`，公开输入指纹与冻结证据相同。worker在baseline阶段报ValueError后退出。
+- 只读核对定位到基线比较噪声：同一失败节点 `test_equivalent_release_requirements_are_one_key` 的 `hash(first)==hash(second)` 在冻结报告中显示575258657340867558/5828956449428120566，本次显示5558181234910447655/6198252884123138357。故障节点、断言和输入相同，数值随进程变化。
+- `FrozenParser.parse` 比较 `_baseline_signature(actual)` 与冻结报告；现有签名只归一化默认对象repr中的地址，不归一化这些hash数值，因此报 `current public baseline differs from frozen evidence`。这是评测适配器的基线一致性问题，不能记为模型修复失败；不应简单忽略所有数字、跳过校验或偷偷改环境。
+- 已生成分阶段合并报告 `D:/Project/PyRepair Agent/tmp/g50combined-1026-a01/`，显著STAGED，134/300，complete=false，剩166个槽未运行。累计用量prompt1,707,335、completion561,725，人民币费用未知。原Docker技术错误和恢复来源保留在合并 `summary.json` 的独立来源字段，不能只看精简goldset-summary。
+- 已完整自建分组结果仍为Agent59/60、单次44/60；两个已知开源dev题现已完成，Agent5/6、单次1/6；开源holdout仅触及首题的两个方法（其中Agent基线技术错误），不能报告30题或50题整体成功率。
+- 额外记录：启动器exit_code和report_exit_code均为0，但journal/summary仍有技术错误，故不能仅用shell退出码判断实验成功。CLI技术停止的退出码传播应在后续修复中单独覆盖，当前不修改正在冻结的源码或已保存报告。
+- 本次监看未读取密钥、调用模型、重验、恢复、清锁或修改源码/冻结包/授权；只补文档并删除监看。后续需先为动态hash证据定义严格的语义一致性规则和离线回归，再经明确授权启动新阶段；原零调用错误仍保留，不自动补跑。
+
+## 已批准动态hash适配器修复与第三阶段
+
+- 用户明确选择“按推荐方案修复并续跑”：只修评测层，保留原始模型输入和普通数字断言；封存前两阶段，先预检剩余公开基线，再续跑167个尚未调用模型的槽，Agent/任务/评分合同不变，累计上限5550。
+- 修复前快照 `g50-hash-prechange-1026-a01.json` 保存80个runtime源码SHA、原runtime/CLI/恢复脚本SHA及关键历史工件SHA。首次只读检查误用Python tuple与JSON list直接相等比较，改用已有协议采用的canonical digest后确认runtime完全一致；没有跳过身份校验或改任何源码。
+- 唯一获准改变的冻结运行时模块为 comparison_evidence.py；新包只复制旧公开/控制资产并重新绑定该适配器源码身份，不覆盖原包、旧授权或结果，不重新整批执行参考/隐藏校准。
+- 现有133条普通记录与两次历史技术事件保留。第三阶段从原slots[133:]开始，167槽（84Agent、83single-shot），新调用上限3107；旧506加新最大3613，小于原5550。最新错误槽之前无模型预留，合法在修复后首次生成；其它已调用槽不得重放。
+- 剩余28题只做一次公开基线预检，保留真实TestRun和Docker工件，receipt绑定新pack/runtime；预检全过才会读取密钥启动模型，不把预检当模型成绩。
+- 本轮写设计文件的自动权限审查曾超时，检查确认未落盘后仅重试一次成功；未扩大权限、移动文件绕过审查或改main checkout。
+
+### 严格hash修复与新包核验
+
+- 首次实现提交5db26cd的47项定向测试通过，但独立审查发现测试夹具未原样覆盖真实保存数据：缺少`AssertionError:`前缀、把短trace的缩进源行写成`>`形式、把pytest的对象repr展开写成了变量表达式。该P1在任何新模型调用前被拦下，不能用首轮测试成绩宣称真实故障已解决。
+- 按原始c22 evidence的完整summary/traceback补回归：先确认1 failed/52 deselected，再修复为支持该原样短trace；对源断言仍做直接hash对hash的AST检查，对pytest展开的对象repr保留原文比较，不将repr当Python变量表达式解析。对应数值一致、不相等、范围限制、字段一致及普通数字保护继续生效。f32c65a提交后53 passed/6.64秒，Ruff通过；独立限定复审通过，原FailureReport和initial_facts不变。
+- 新包`g50p-1026-b01`仅复制旧p/control资产并更新获准的适配器runtime身份。首次在普通权限下核验时被Docker named pipe访问权限拒绝；尚未执行公开测试、没有新增模型调用。保留已复制文件，后续以必要权限只读核对相同字节并完成严格验证，不覆盖旧包或重新捕获证据。
+- 必要权限下严格验证完成，包身份`7c3460185d5d2a66c62d4524832ab79757776557907ce1ae8a5803ca23e8f7fb`。p目录3545文件、control目录7840文件均与旧包逐字节一致；证明保存为`g50-adapter-rebase-1026-a01.json`。只更新获批的comparison_evidence.py源码身份，没有重新进行参考或隐藏测试校准。
+- 28题公开Docker基线观测已全部收齐，`g50pf-1026-a01`保留原始TestRun和Docker工件。原预检在第20题停止，前19题一致，包括已修复的packaging hash题；随后仅执行尚未尝试的最后8题，并复用前20题保存数据汇总。诊断结果27一致、1基线差异，`diagnostic-summary.json`明确不是通过凭据；原`error.json`保留，没有伪造receipt。
+- 唯一新增差异是`os_click_callable_flag_3225`的pytest省略对象repr：完整`Strategy object at 0x...`已被原地址规则识别，但断言摘要中的`[<test_repro....7a7f8c9752b0>]`与本次`[<test_repro....7857eaf792b0>]`还保留动态地址尾部。输入、源节点、异常和断言一致，不是模型错误；这次所有公开检查均无超时、无启动或collection错误。
+- 该问题超出明确的hash-only修复范围，已另向用户请求受限补齐地址规则的确认：必须由同份完整对象repr佐证省略地址，保留其它文本、数字和原模型输入。未获确认前不改变runtime、不签发新API授权、不启动167槽；累计调用仍506，新增0。可以继续完成已批准的外层控制器离线审查。
+
+### 第三阶段外层控制器离线实现
+
+- 提交`1573700be3fae5e59b736cd327ced02bae6bd3ed`只新增`goldset50_adapter_resume.py`、`goldset50_adapter_report.py`和对应测试，不改Agent、历史恢复脚本或其它冻结运行时。计划绑定修复前80文件清单、旧两阶段授权/记录/已响应调用、新严格冻结包、28题预检及独立控制器源码。
+- 固定复用原129条普通记录及恢复阶段前4条；末次零模型调用的worker错误槽在授权后才能首次生成。新167槽不带旧对话上下文、不重放已调用槽；全局3107上限，旧506累计最坏3613，技术错误非零退出，不自动恢复或清锁。
+- 报告只读取已保存候选/验收/用量，不重新调用模型或评分；保留两次历史技术事件、来源和真实时长，缺失时长仍unknown。完整文件清单另存有大小约束的sidecar，避免复制大树清单导致summary超过现有4MiB限制，未放宽大小约束。
+- TDD初期覆盖缺模块/缺行为；集成时发现Python tuple与JSON list应按canonical digest比较，已修复。另一次集成恰逢格式化改变控制器SHA，按设计拒绝；最终先冻结源码再执行完整定向测试，85 passed/217.20秒（32控制器+53故障证据），Ruff与格式检查通过。没有运行300槽模拟、Docker、真实API或读取凭据；独立代码审查进行中。
+- 独立限定审查已通过`1573700`：Spec PASS、Task quality Approved，无P1/P2或有意义的minor；核对了共享执行器确实在每个worker前重新检查绑定身份、读取凭据发生在校验之后，journal顺序与报告映射成立。审查没有重复测试或真实调用。该结论只覆盖实现，不等于真实续跑就绪：27/28不是有效预检，仍需额外地址规则的用户决定及完整28/28凭据后才能签发阶段授权。
