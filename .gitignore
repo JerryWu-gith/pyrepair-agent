@@ -15,6 +15,7 @@ build/
 tmp/
 .worktrees/
 benchmarks/results/*.jsonl
+!benchmarks/results/goldset50-20261027-runs.jsonl
 benchmarks/results/v2/
 benchmarks/results/review/
 benchmarks/results/opensource/

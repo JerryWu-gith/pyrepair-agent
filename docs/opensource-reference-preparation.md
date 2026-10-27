@@ -1,5 +1,7 @@
 # 三十题固定源码与参考补丁准备记录
 
+> 2026-10-27 最新状态：统一 50 题、双方法各三次的 300 次运行已完成，见[正式结果与限制](goldset50-results.md)。以下保留 2026-10-25 的历史准备记录；“尚未校准”“尚未评测”及当时的 readiness 字段不是当前进度。
+
 日期：2026-10-25。**30道来源的源码与参考补丁已准备，尚未完成任务行为校准，不是模型成绩报告。**
 
 依据 [统一五十题设计](superpowers/specs/2026-10-25-unified-goldset50-design.md) 和 [本单元计划](superpowers/plans/2026-10-25-catalog-reference-assets.md)。来源仍为 [同一三十题目录](opensource-catalog30.md)，没有因模型表现更换题目。
