@@ -4,3 +4,6 @@ benchmarks/eval_cases/** -text
 benchmarks/eval_private/** -text
 benchmarks/review_cases/** -text
 benchmarks/review_cases_hard_v1/** -text
+# Public result hashes use canonical LF bytes on every checkout platform.
+benchmarks/results/goldset50-20261027-summary.json text eol=lf
+benchmarks/results/goldset50-20261027-runs.jsonl text eol=lf
